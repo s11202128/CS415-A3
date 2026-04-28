@@ -86,7 +86,12 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
       setAuthView("login");
       setAuthForm({ ...authForm, password: "", confirmPassword: "" });
     } catch (err) {
-      setAuthMessage(err.message);
+      // Show detailed backend error if available
+      let msg = err.message;
+      if (err && err.response && err.response.error && err.response.error.message) {
+        msg = err.response.error.message;
+      }
+      setAuthMessage(msg || "Registration failed. Please try again.");
     }
   }
 
