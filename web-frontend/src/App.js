@@ -16,6 +16,8 @@ import StatementsTab from "./components/tabs/StatementsTab";
 import LoansTab from "./components/tabs/LoansTab";
 import ProfileTab from "./components/tabs/ProfileTab";
 import AdminLockScreen from "./components/tabs/AdminLockScreen";
+import AccountManager from "./components/AccountManager";
+import CreditCardPanel from "./components/CreditCardPanel";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -144,7 +146,8 @@ export default function App() {
     }
     setError("");
     try {
-      const [customerRows, accountRows, scheduled, billHistoryRows, products, apps, invs, rate, sumRows, statementRequestRows] = await Promise.all([
+      const hasAdminScopeForFetch = Boolean(currentUser?.isAdmin || (showAdmin && adminAccessGranted));
+      const settled = await Promise.allSettled([
         api.getCustomers(),
         api.getAccounts(),
         api.getScheduledBills(),
@@ -152,9 +155,25 @@ export default function App() {
         api.getLoanProducts(),
         api.getLoanApplications(),
         api.getInterestRate(),
-        api.getSummaries(),
+        hasAdminScopeForFetch ? api.getSummaries() : Promise.resolve([]),
         api.getStatementRequests(),
       ]);
+      const valueOr = (idx, fallback) => (settled[idx].status === "fulfilled" ? settled[idx].value : fallback);
+      const customerRows = valueOr(0, []);
+      const accountRows = valueOr(1, []);
+      const scheduled = valueOr(2, []);
+      const billHistoryRows = valueOr(3, []);
+      const products = valueOr(4, []);
+      const apps = valueOr(5, []);
+      const rate = valueOr(6, { reserveBankMinSavingsInterestRate: 0 });
+      const sumRows = valueOr(7, []);
+      const statementRequestRows = valueOr(8, []);
+      // Log non-fatal failures without showing global error banner
+      settled.forEach((r, i) => {
+        if (r.status === "rejected") {
+          console.warn(`loadInitialData: request #${i} failed:`, r.reason?.message || r.reason);
+        }
+      });
 
       const hasAdminScope = Boolean(currentUser?.isAdmin || (showAdmin && adminAccessGranted));
 
@@ -269,7 +288,12 @@ export default function App() {
 
   useEffect(() => {
     if (!notificationCustomer) return;
-    api.getNotifications(notificationCustomer).then(setNotifications).catch((err) => setError(err.message));
+    api
+      .getNotifications(notificationCustomer)
+      .then(setNotifications)
+      .catch((err) => {
+        console.warn("Notifications fetch failed:", err?.message || err);
+      });
   }, [notificationCustomer]);
 
 
@@ -622,6 +646,7 @@ export default function App() {
       });
       setAdminDepositMessage("Deposit completed successfully.");
       setAdminDepositForm({ accountId: "", amount: "", description: "" });
+      // Refresh all data for both admin and customer views
       await loadInitialData();
     } catch (err) {
       setAdminDepositMessage(err.message);
@@ -780,11 +805,12 @@ export default function App() {
 
           {currentUser && !loading && activeTab === "Overview" && (
             <HomePage
-              totalBalance={totalBalance}
+              totalBalance={accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0)}
               currentUser={currentUser}
               lastUpdatedAt={lastUpdatedAt}
               onRefreshOverview={loadInitialData}
               isRefreshing={loading}
+              accounts={accounts}
             />
           )}
 
@@ -860,6 +886,19 @@ export default function App() {
               loanMessage={loanMessage}
               setLoanMessage={setLoanMessage}
             />
+          )}
+
+          {!loading && currentUser && activeTab === "Account Lab" && (
+            <section className="account-lab" style={{ display: "grid", gap: 16 }}>
+              <h2>Account Lab</h2>
+              <p style={{ color: "#555", marginTop: -8 }}>
+                Try out the new account-type business layer (Access / Savings / Business)
+                and the optional standalone Credit Card product. These are kept
+                separate from your existing bank accounts.
+              </p>
+              <AccountManager />
+              <CreditCardPanel />
+            </section>
           )}
 
           {!loading && currentUser && activeTab === "Profile" && (

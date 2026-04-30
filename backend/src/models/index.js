@@ -12,6 +12,8 @@ const LoginLog = require('./LoginLog');
 const NotificationLog = require('./NotificationLog');
 const ActivityLog = require('./ActivityLog');
 const StatementRequest = require('./StatementRequest');
+const BusinessLayerAccount = require('./BusinessLayerAccount');
+const BusinessLayerCard = require('./BusinessLayerCard');
 
 // Define associations
 Customer.hasMany(Account, { foreignKey: 'customerId' });
@@ -71,4 +73,6 @@ module.exports = {
   NotificationLog,
   ActivityLog,
   StatementRequest,
+  BusinessLayerAccount,
+  BusinessLayerCard,
 };
