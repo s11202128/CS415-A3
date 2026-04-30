@@ -265,43 +265,14 @@ export default function App() {
     }
   }
 
-  useEffect(() => {
-    if (!authToken || !currentUser) {
-      return;
-    }
 
-    const refreshInBackground = () => {
-      loadInitialData({ silent: true }).catch(() => {
-        // Errors are handled in loadInitialData state; swallow here to keep interval alive.
-      });
-    };
-
-    const timer = setInterval(refreshInBackground, 2000);
-    return () => clearInterval(timer);
-  }, [authToken, currentUser, showAdmin, adminAccessGranted]);
 
   useEffect(() => {
     if (!notificationCustomer) return;
     api.getNotifications(notificationCustomer).then(setNotifications).catch((err) => setError(err.message));
   }, [notificationCustomer]);
 
-  // SRP: admin polling concern extracted to useAdminPoll hook
-  useAdminPoll({
-    enabled: Boolean((currentUser?.isAdmin || adminAccessGranted) && showAdmin),
-    accounts,
-    selectedAccountForTx,
-    onData: ({ txRows, loginLogRows, notificationLogRows, limit, report, statementReqRows }) => {
-      setAdminTransactions(txRows);
-      setAdminLoginLogs(loginLogRows);
-      setAdminNotificationLogs(notificationLogRows);
-      setAdminTransferLimit(Number(limit.highValueTransferLimit || 1000));
-      setAdminReport(report);
-      setAdminStatementRequests(statementReqRows);
-      setAdminLastUpdated(new Date().toISOString());
-    },
-    onError: (msg) => setAdminMessage(msg),
-    intervalMs: 2000,
-  });
+
 
   const totalBalance = accounts.filter(a => a.status === "active").reduce((sum, a) => sum + a.balance, 0);
   const currentYear = new Date().getFullYear();
@@ -495,7 +466,7 @@ export default function App() {
     setLoanMessage("");
     try {
       await api.createLoanApplication({
-        ...loanForm,
+        ...loanForm, 
         requestedAmount: Number(loanForm.requestedAmount),
         termMonths: Number(loanForm.termMonths),
         monthlyIncome: Number(loanForm.monthlyIncome || 0),
@@ -788,6 +759,12 @@ export default function App() {
         </aside>
 
         <section className="tab-content">
+          {/* Manual refresh button for customers only */}
+          {currentUser && !isAdminUser && (
+            <button className="refresh-btn" style={{ marginBottom: 16 }} onClick={() => loadInitialData()}>
+              Refresh
+            </button>
+          )}
           {error && <p className="status error"><strong>Error:</strong> {error}</p>}
           {loading && !error && <p className="status">Loading data...</p>}
           {!currentUser && !loading && !error && (
