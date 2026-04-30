@@ -8,7 +8,7 @@ import AdminMonitoringTab from "./admin/AdminMonitoringTab";
 import AdminAccountLabTab from "./admin/AdminAccountLabTab";
 import ComplianceTab from "./tabs/ComplianceTab";
 
-const ADMIN_SECTIONS = ["Overview", "Customers", "Accounts", "Deposits", "Loans", "Account Lab", "Monitoring", "Compliance"];
+const ADMIN_SECTIONS = ["Overview", "Customers", "Accounts", "Deposits", "Loans", "Business", "Monitoring", "Compliance"];
 
 export default function AdminPage({
   customers,
@@ -116,7 +116,7 @@ export default function AdminPage({
           {activeSection === "Loans" && (
             <AdminLoansTab loanApplications={loanApplications} onAdminUpdateLoanStatus={onAdminUpdateLoanStatus} />
           )}
-          {activeSection === "Account Lab" && (
+          {activeSection === "Business" && (
             <AdminAccountLabTab />
           )}
           {activeSection === "Monitoring" && (

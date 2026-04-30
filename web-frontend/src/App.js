@@ -888,9 +888,9 @@ export default function App() {
             />
           )}
 
-          {!loading && currentUser && activeTab === "Account Lab" && (
+          {!loading && currentUser && activeTab === "Business" && (
             <section className="account-lab" style={{ display: "grid", gap: 16 }}>
-              <h2>Account Lab</h2>
+              <h2>Business</h2>
               <p style={{ color: "#555", marginTop: -8 }}>
                 Try out the new account-type business layer (Access / Savings / Business)
                 and the optional standalone Credit Card product. These are kept

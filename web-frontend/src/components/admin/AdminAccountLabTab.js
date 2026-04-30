@@ -175,7 +175,7 @@ export default function AdminAccountLabTab() {
   return (
     <div className="admin-account-lab" style={{ display: "grid", gap: 24 }}>
       <header>
-        <h2>Account Lab (Admin)</h2>
+        <h2>Business (Admin)</h2>
         <p style={{ color: "#555", marginTop: -4 }}>
           Manage the new business-layer accounts (Access / Savings / Business) and the
           standalone Credit Card product. These sit alongside, but separate from, the
