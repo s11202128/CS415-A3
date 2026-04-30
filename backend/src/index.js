@@ -112,6 +112,11 @@ app.use((req, res, next) => {
 });
 
 app.use("/api", authRoutes);
+// New business-layer account routes (mounted BEFORE apiRoutes so sub-paths
+// like /accounts/create, /accounts/:id/deposit are handled here while
+// unmatched /accounts paths fall through to the existing apiRoutes).
+app.use("/api/accounts", require("./routes/accountRoutes"));
+app.use("/api/creditcard", require("./routes/creditCardRoutes"));
 app.use("/api", apiRoutes);
 app.use("/api/transactions", transactionRoutes);
 
