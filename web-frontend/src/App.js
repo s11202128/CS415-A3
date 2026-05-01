@@ -18,6 +18,8 @@ import ProfileTab from "./components/tabs/ProfileTab";
 import AdminLockScreen from "./components/tabs/AdminLockScreen";
 import AccountManager from "./components/AccountManager";
 import CreditCardPanel from "./components/CreditCardPanel";
+// Chatbot widget – additive, shown on every page
+import ChatWidget from "./components/chatbot/ChatWidget";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -303,7 +305,12 @@ export default function App() {
 
   // ── Auth gate ────────────────────────────────────────────────────────────
   if (!authToken) {
-    return <AuthPage onLoginSuccess={handleLoginSuccess} currentYear={currentYear} />;
+    return (
+      <>
+        <AuthPage onLoginSuccess={handleLoginSuccess} currentYear={currentYear} />
+        <ChatWidget />
+      </>
+    );
   }
   // ────────────────────────────────────────────────────────────────────────
 
@@ -697,6 +704,7 @@ export default function App() {
           </div>
         </header>
         <AdminPage
+          authToken={authToken}
           customers={customers}
           accounts={accounts}
           transactions={adminTransactions}
@@ -738,6 +746,7 @@ export default function App() {
           complianceMessage={complianceMessage}
         />
         <SiteFooter currentYear={currentYear} />
+        <ChatWidget currentUser={currentUser} authToken={authToken} />
       </div>
     );
   }
@@ -914,6 +923,7 @@ export default function App() {
       </div>
 
       <SiteFooter currentYear={currentYear} />
+      <ChatWidget currentUser={currentUser} authToken={authToken} />
     </div>
   );
 }
