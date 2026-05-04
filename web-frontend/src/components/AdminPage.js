@@ -6,9 +6,10 @@ import AdminDepositsTab from "./admin/AdminDepositsTab";
 import AdminLoansTab from "./admin/AdminLoansTab";
 import AdminMonitoringTab from "./admin/AdminMonitoringTab";
 import AdminAccountLabTab from "./admin/AdminAccountLabTab";
+import AdminNetIncomeTab from "./admin/AdminNetIncomeTab";
 import ComplianceTab from "./tabs/ComplianceTab";
 
-const ADMIN_SECTIONS = ["Overview", "Customers", "Accounts", "Deposits", "Loans", "Business", "Monitoring", "Compliance"];
+const ADMIN_SECTIONS = ["Overview", "Customers", "Accounts", "Deposits", "Loans", "Business", "Net Income", "Monitoring", "Compliance"];
 
 export default function AdminPage({
   customers,
@@ -119,6 +120,9 @@ export default function AdminPage({
           )}
           {activeSection === "Business" && (
             <AdminAccountLabTab />
+          )}
+          {activeSection === "Net Income" && (
+            <AdminNetIncomeTab authToken={authToken} />
           )}
           {activeSection === "Monitoring" && (
             <AdminMonitoringTab
