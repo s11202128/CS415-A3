@@ -199,8 +199,8 @@ export default function IssuesDashboard({ authToken, apiBase = "/api" }) {
                   )}
                 </td>
                 <td style={{ textTransform: "capitalize" }}>{i.category}</td>
-                <td style={{ maxWidth: 240 }}>{i.query}</td>
-                <td style={{ maxWidth: 280 }}>{i.response}</td>
+                <td className="col-query">{i.query}</td>
+                <td className="col-response">{i.response}</td>
                 <td>
                   <span className={`bof-pill ${i.status}`}>{i.status}</span>
                 </td>
