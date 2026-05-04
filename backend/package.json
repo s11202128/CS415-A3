@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "verify:relationships": "node src/verify-relationships.js"
+    "verify:relationships": "node src/verify-relationships.js",
+    "test": "node --test src/models/business/__tests__/accounts.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

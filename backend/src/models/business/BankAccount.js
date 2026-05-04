@@ -61,10 +61,14 @@ class BankAccount {
     throw new Error("calculateMonthlyFee() must be implemented by subclass");
   }
 
+  static round2(value) {
+    return Math.round((Number(value) || 0) * 100) / 100;
+  }
+
   applyMonthlyFee() {
-    const fee = Number(this.calculateMonthlyFee()) || 0;
+    const fee = BankAccount.round2(this.calculateMonthlyFee());
     if (fee > 0) {
-      this.balance -= fee;
+      this.balance = BankAccount.round2(this.balance - fee);
       this.transactions.push({
         type: "fee",
         amount: fee,
