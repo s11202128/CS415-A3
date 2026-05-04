@@ -746,7 +746,6 @@ export default function App() {
           complianceMessage={complianceMessage}
         />
         <SiteFooter currentYear={currentYear} />
-        <ChatWidget currentUser={currentUser} authToken={authToken} />
       </div>
     );
   }

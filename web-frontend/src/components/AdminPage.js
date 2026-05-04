@@ -7,10 +7,8 @@ import AdminLoansTab from "./admin/AdminLoansTab";
 import AdminMonitoringTab from "./admin/AdminMonitoringTab";
 import AdminAccountLabTab from "./admin/AdminAccountLabTab";
 import ComplianceTab from "./tabs/ComplianceTab";
-import IssuesDashboard from "./chatbot/IssuesDashboard";
-import SessionsDashboard from "./chatbot/SessionsDashboard";
 
-const ADMIN_SECTIONS = ["Overview", "Customers", "Accounts", "Deposits", "Loans", "Business", "Monitoring", "Compliance", "Chatbot", "Chat Sessions"];
+const ADMIN_SECTIONS = ["Overview", "Customers", "Accounts", "Deposits", "Loans", "Business", "Monitoring", "Compliance"];
 
 export default function AdminPage({
   customers,
@@ -147,12 +145,6 @@ export default function AdminPage({
               summaries={summaries}
               complianceMessage={complianceMessage}
             />
-          )}
-          {activeSection === "Chatbot" && (
-            <IssuesDashboard authToken={authToken} />
-          )}
-          {activeSection === "Chat Sessions" && (
-            <SessionsDashboard authToken={authToken} />
           )}
         </section>
       </div>
