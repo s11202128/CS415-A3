@@ -1,4 +1,4 @@
-export default function BankBrand({
+ export default function BankBrand({
   title = "Bank of Fiji",
   subtitle = "",
   className = "",

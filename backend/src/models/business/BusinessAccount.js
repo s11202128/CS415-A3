@@ -2,10 +2,10 @@
 
 const BankAccount = require("./BankAccount");
 
-const NET_INPUT_THRESHOLD = 2000;
-const FLAT_FEE = 20;
-
 class BusinessAccount extends BankAccount {
+  static NET_INPUT_THRESHOLD = 2000;
+  static FLAT_FEE = 20;
+
   constructor({ accountId, owner, balance = 0 }) {
     super({ accountId, owner, accountType: "business", balance });
     this.monthlyDeposits = 0;
@@ -29,7 +29,9 @@ class BusinessAccount extends BankAccount {
   }
 
   calculateMonthlyFee() {
-    return this.monthlyNetInput < NET_INPUT_THRESHOLD ? FLAT_FEE : 0;
+    return this.monthlyNetInput < BusinessAccount.NET_INPUT_THRESHOLD
+      ? BusinessAccount.FLAT_FEE
+      : 0;
   }
 
   resetMonthlyTrackers() {
@@ -43,7 +45,7 @@ class BusinessAccount extends BankAccount {
       monthlyDeposits: this.monthlyDeposits,
       monthlyWithdrawals: this.monthlyWithdrawals,
       monthlyNetInput: this.monthlyNetInput,
-      netInputThreshold: NET_INPUT_THRESHOLD,
+      netInputThreshold: BusinessAccount.NET_INPUT_THRESHOLD,
     };
   }
 }

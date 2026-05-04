@@ -18,6 +18,8 @@ import ProfileTab from "./components/tabs/ProfileTab";
 import AdminLockScreen from "./components/tabs/AdminLockScreen";
 import AccountManager from "./components/AccountManager";
 import CreditCardPanel from "./components/CreditCardPanel";
+// Chatbot widget – additive, shown on every page
+import ChatWidget from "./components/chatbot/ChatWidget";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -303,7 +305,12 @@ export default function App() {
 
   // ── Auth gate ────────────────────────────────────────────────────────────
   if (!authToken) {
-    return <AuthPage onLoginSuccess={handleLoginSuccess} currentYear={currentYear} />;
+    return (
+      <>
+        <AuthPage onLoginSuccess={handleLoginSuccess} currentYear={currentYear} />
+        <ChatWidget />
+      </>
+    );
   }
   // ────────────────────────────────────────────────────────────────────────
 
@@ -697,6 +704,7 @@ export default function App() {
           </div>
         </header>
         <AdminPage
+          authToken={authToken}
           customers={customers}
           accounts={accounts}
           transactions={adminTransactions}
@@ -888,9 +896,9 @@ export default function App() {
             />
           )}
 
-          {!loading && currentUser && activeTab === "Account Lab" && (
+          {!loading && currentUser && activeTab === "Business" && (
             <section className="account-lab" style={{ display: "grid", gap: 16 }}>
-              <h2>Account Lab</h2>
+              <h2>Business</h2>
               <p style={{ color: "#555", marginTop: -8 }}>
                 Try out the new account-type business layer (Access / Savings / Business)
                 and the optional standalone Credit Card product. These are kept
@@ -914,6 +922,7 @@ export default function App() {
       </div>
 
       <SiteFooter currentYear={currentYear} />
+      <ChatWidget currentUser={currentUser} authToken={authToken} />
     </div>
   );
 }

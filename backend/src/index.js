@@ -117,8 +117,11 @@ app.use("/api", authRoutes);
 // unmatched /accounts paths fall through to the existing apiRoutes).
 app.use("/api/accounts", require("./routes/accountRoutes"));
 app.use("/api/creditcard", require("./routes/creditCardRoutes"));
+app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api", apiRoutes);
 app.use("/api/transactions", transactionRoutes);
+// Chatbot module (additive – does not affect any existing routes)
+app.use("/api/chatbot", require("./routes/chatbotRoutes"));
 
 app.use(errorHandler);
 

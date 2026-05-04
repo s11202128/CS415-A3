@@ -40,6 +40,7 @@ export default function AdminAccountLabTab() {
   const [cardError, setCardError] = useState("");
 
   const [busy, setBusy] = useState(false);
+  const [subTab, setSubTab] = useState("accounts"); // "accounts" | "cards"
 
   const refreshAccounts = useCallback(async () => {
     try {
@@ -175,15 +176,45 @@ export default function AdminAccountLabTab() {
   return (
     <div className="admin-account-lab" style={{ display: "grid", gap: 24 }}>
       <header>
-        <h2>Account Lab (Admin)</h2>
+        <h2>Business (Admin)</h2>
         <p style={{ color: "#555", marginTop: -4 }}>
           Manage the new business-layer accounts (Access / Savings / Business) and the
-          standalone Credit Card product. These sit alongside, but separate from, the
-          existing customer accounts.
+          standalone Credit Card product. Switch between the two using the tabs below.
         </p>
+        <div
+          role="tablist"
+          aria-label="Business sub-sections"
+          style={{ display: "inline-flex", gap: 6, marginTop: 12, padding: 4, border: "1px solid #d8dee9", borderRadius: 999, background: "#f5f7fb" }}
+        >
+          {[
+            { id: "accounts", label: "Bank Accounts" },
+            { id: "cards", label: "Credit Cards" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={subTab === t.id}
+              onClick={() => setSubTab(t.id)}
+              style={{
+                padding: "6px 16px",
+                borderRadius: 999,
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 600,
+                background: subTab === t.id ? "#0a1733" : "transparent",
+                color: subTab === t.id ? "#fff" : "#1f2a44",
+                transition: "background 0.15s ease",
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </header>
 
       {/* ================= BANK ACCOUNTS ================= */}
+      {subTab === "accounts" && (
       <section className="panel" style={{ border: "1px solid #ddd", padding: 16, borderRadius: 8 }}>
         <h3>Bank Accounts</h3>
 
@@ -291,8 +322,10 @@ export default function AdminAccountLabTab() {
           </tbody>
         </table>
       </section>
+      )}
 
       {/* ================= CREDIT CARDS ================= */}
+      {subTab === "cards" && (
       <section className="panel" style={{ border: "1px solid #ddd", padding: 16, borderRadius: 8 }}>
         <h3>Credit Cards</h3>
 
@@ -386,6 +419,7 @@ export default function AdminAccountLabTab() {
           </tbody>
         </table>
       </section>
+      )}
     </div>
   );
 }
