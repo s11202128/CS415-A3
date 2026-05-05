@@ -897,3 +897,143 @@
   color: #0a1733;
   font-weight: 500;
 }
+
+/* Sessions table column sizing — give Rating room and Started/Ended breathing space */
+.admin-chatbot .bof-sessions-table { table-layout: fixed; min-width: 1240px; }
+.admin-chatbot .bof-sessions-table th:nth-child(1),  /* Session ID */
+.admin-chatbot .bof-sessions-table td:nth-child(1) { width: 130px; }
+.admin-chatbot .bof-sessions-table th:nth-child(2),  /* Customer */
+.admin-chatbot .bof-sessions-table td:nth-child(2) { width: 160px; }
+.admin-chatbot .bof-sessions-table th:nth-child(3),  /* Summary */
+.admin-chatbot .bof-sessions-table td:nth-child(3) {
+  width: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.admin-chatbot .bof-sessions-table th:nth-child(4),  /* Messages */
+.admin-chatbot .bof-sessions-table td:nth-child(4) { width: 90px; text-align: center; }
+.admin-chatbot .bof-sessions-table th:nth-child(5),  /* Status */
+.admin-chatbot .bof-sessions-table td:nth-child(5) { width: 130px; white-space: nowrap; }
+.admin-chatbot .bof-sessions-table th:nth-child(6),  /* Rating */
+.admin-chatbot .bof-sessions-table td:nth-child(6) {
+  width: 170px;
+  white-space: normal;
+  vertical-align: top;
+}
+.admin-chatbot .bof-sessions-table th:nth-child(7),  /* Started */
+.admin-chatbot .bof-sessions-table td:nth-child(7) { width: 180px; white-space: nowrap; padding-left: 18px; }
+.admin-chatbot .bof-sessions-table th:nth-child(8),  /* Ended */
+.admin-chatbot .bof-sessions-table td:nth-child(8) { width: 180px; white-space: nowrap; padding-left: 18px; }
+.admin-chatbot .bof-sessions-table th:nth-child(9),  /* Action */
+.admin-chatbot .bof-sessions-table td:nth-child(9) { width: 90px; text-align: right; }
+
+/* Sessions dashboard visual refinements */
+.bof-issues-error {
+  color: #b00020;
+  background: #fff3f5;
+  border: 1px solid #ffd5de;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.bof-sessions-scroll {
+  overflow-x: auto;
+  width: 100%;
+  border: 1px solid #e6ebf3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px -16px rgba(10, 23, 51, 0.35);
+}
+
+.bof-sessions-scroll::-webkit-scrollbar { height: 8px; }
+.bof-sessions-scroll::-webkit-scrollbar-thumb {
+  background: #c9d3e3;
+  border-radius: 999px;
+}
+
+.bof-sessions-empty {
+  text-align: center;
+  color: #6e7f9f;
+  padding: 28px !important;
+  font-style: italic;
+}
+
+.bof-sessions-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #334364;
+  letter-spacing: 0.01em;
+}
+
+.bof-sessions-subtext {
+  font-size: 11px;
+  color: #6e7f9f;
+  margin-top: 2px;
+}
+
+.bof-sessions-summary {
+  max-width: 340px;
+  color: #1f2a44;
+  line-height: 1.45;
+}
+
+.bof-sessions-center {
+  text-align: center;
+  font-weight: 600;
+  color: #243a69;
+}
+
+.bof-sessions-comment {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6e7f9f;
+  max-width: 190px;
+  line-height: 1.35;
+}
+
+.bof-sessions-date {
+  font-size: 12px;
+  color: #42516f;
+  white-space: nowrap;
+}
+
+.bof-sessions-view-btn {
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid #d7dfec;
+  background: #f8fafd;
+  color: #1b2f57;
+  padding: 6px 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bof-sessions-view-btn:hover {
+  border-color: #1e7bff;
+  color: #1e7bff;
+  background: #eef5ff;
+}
+
+.bof-session-info {
+  font-size: 12px;
+  color: #5f6f8f;
+  margin: 12px 0 14px;
+  background: #f8fafd;
+  border: 1px solid #e6ebf3;
+  border-radius: 10px;
+  padding: 10px 12px;
+  line-height: 1.55;
+}
+
+.bof-session-meta-time {
+  margin-left: 8px;
+}
+
+/* Restore default reset for Issues table — clears any inherited Sessions widths
+   if specificity ever conflicts. Issues table specifically uses .bof-issues-table
+   without .bof-sessions-table. */
