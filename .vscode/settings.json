@@ -1,3 +1,21 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+
+    // ---------- Node.js Test Runner (built-in / connor4312.nodejs-testing) ----------
+    "nodejs-testing.enable": true,
+    "nodejs-testing.include": [
+        "backend/src/**/__tests__/*.test.js"
+    ],
+    "nodejs-testing.extensions": [
+        { "extensions": ["js"], "parameters": [] }
+    ],
+
+    // ---------- Vitest (vitest.explorer) ----------
+    "vitest.workspaceConfig": "./web-frontend/vite.config.js",
+    "vitest.rootConfig": "./web-frontend/vite.config.js",
+
+    // ---------- Java / Gradle (vscjava.vscode-java-pack + vscjava.vscode-gradle) ----------
+    "java.test.config": {
+        "workingDirectory": "${workspaceFolder}/mobile-android"
+    }
 }

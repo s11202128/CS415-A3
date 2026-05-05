@@ -18,6 +18,55 @@
 			"type": "shell",
 			"command": "cd server && npm run start",
 			"isBackground": true
+		},
+		{
+			"label": "Test: Backend (node:test)",
+			"type": "shell",
+			"command": "npm test",
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"group": "test",
+			"problemMatcher": [],
+			"presentation": { "panel": "dedicated", "reveal": "always" }
+		},
+		{
+			"label": "Test: Web (Vitest)",
+			"type": "shell",
+			"command": "npm test",
+			"options": { "cwd": "${workspaceFolder}/web-frontend" },
+			"group": "test",
+			"problemMatcher": [],
+			"presentation": { "panel": "dedicated", "reveal": "always" }
+		},
+		{
+			"label": "Test: Android Unit (JUnit 4)",
+			"type": "shell",
+			"command": ".\\gradlew",
+			"args": [":app:testDebugUnitTest", "--console=plain"],
+			"options": { "cwd": "${workspaceFolder}/mobile-android" },
+			"group": "test",
+			"problemMatcher": [],
+			"presentation": { "panel": "dedicated", "reveal": "always" }
+		},
+		{
+			"label": "Test: Android Instrumentation (Compose UI)",
+			"type": "shell",
+			"command": ".\\gradlew",
+			"args": [":app:connectedDebugAndroidTest", "--console=plain"],
+			"options": { "cwd": "${workspaceFolder}/mobile-android" },
+			"group": "test",
+			"problemMatcher": [],
+			"presentation": { "panel": "dedicated", "reveal": "always" }
+		},
+		{
+			"label": "Test: All",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Test: Backend (node:test)",
+				"Test: Web (Vitest)",
+				"Test: Android Unit (JUnit 4)"
+			],
+			"group": { "kind": "test", "isDefault": true },
+			"problemMatcher": []
 		}
 	]
 }

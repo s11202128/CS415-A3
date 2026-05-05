@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "connor4312.nodejs-testing",
+        "vitest.explorer",
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-gradle",
+        "fwcd.kotlin",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+    ]
+}
