@@ -86,6 +86,7 @@ export default function App() {
   const [adminTransactions, setAdminTransactions] = useState([]);
   const [adminLoginLogs, setAdminLoginLogs] = useState([]);
   const [adminNotificationLogs, setAdminNotificationLogs] = useState([]);
+  const [adminNotificationPreferences, setAdminNotificationPreferences] = useState([]);
   const [adminTransferLimit, setAdminTransferLimit] = useState(1000);
   const [adminReport, setAdminReport] = useState(null);
   const [adminLastUpdated, setAdminLastUpdated] = useState("");
@@ -211,6 +212,21 @@ export default function App() {
       setLastUpdatedAt(new Date().toISOString());
       if (hasAdminScope) {
         setAdminStatementRequests(statementRequestRows);
+        const [adminTxRows, adminLoginRows, adminNotifRows, adminLimit, adminDashboard, notificationPrefs] = await Promise.all([
+          api.getAdminTransactions(),
+          api.getAdminLoginLogs(100),
+          api.getNotificationLogsAdmin(100),
+          api.getTransferLimitAdmin(),
+          api.getAdminDashboardReport(),
+          api.getNotificationPreferencesAdmin(),
+        ]);
+        setAdminTransactions(adminTxRows);
+        setAdminLoginLogs(adminLoginRows);
+        setAdminNotificationLogs(adminNotifRows);
+        setAdminTransferLimit(Number(adminLimit?.highValueTransferLimit || 1000));
+        setAdminReport(adminDashboard);
+        setAdminNotificationPreferences(notificationPrefs);
+        setAdminLastUpdated(new Date().toISOString());
       }
 
       // Load transaction history for each visible account so Accounts tab can show transfer/bill history.
@@ -624,6 +640,19 @@ export default function App() {
     }
   }
 
+  async function onAdminToggleNotificationPreference(eventKey, isEnabled) {
+    setAdminMessage("");
+    try {
+      const updated = await api.updateNotificationPreferenceAdmin(eventKey, isEnabled);
+      setAdminNotificationPreferences((prev) =>
+        prev.map((row) => (row.eventKey === updated.eventKey ? updated : row))
+      );
+      setAdminMessage("Notification setting updated.");
+    } catch (err) {
+      setAdminMessage(err.message);
+    }
+  }
+
   async function onCreateAdminAccount(e) {
     e.preventDefault();
     setAdminAccountMessage("");
@@ -733,6 +762,8 @@ export default function App() {
           onAdminReverseTransaction={onAdminReverseTransaction}
           adminLoginLogs={adminLoginLogs}
           adminNotificationLogs={adminNotificationLogs}
+          adminNotificationPreferences={adminNotificationPreferences}
+          onAdminToggleNotificationPreference={onAdminToggleNotificationPreference}
           adminStatementRequests={adminStatementRequests}
           onAdminUpdateStatementRequest={onAdminUpdateStatementRequest}
           adminReport={adminReport}

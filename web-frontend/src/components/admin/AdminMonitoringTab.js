@@ -11,6 +11,8 @@ export default function AdminMonitoringTab({
   onAdminReverseTransaction,
   adminLoginLogs,
   adminNotificationLogs,
+  adminNotificationPreferences,
+  onAdminToggleNotificationPreference,
 }) {
   const [activeView, setActiveView] = useState("transactions");
 
@@ -33,6 +35,7 @@ export default function AdminMonitoringTab({
   const VIEWS = [
     { id: "transactions", label: "TRANSACTIONS" },
     { id: "controls", label: "TRANSFER CONTROLS" },
+    { id: "settings", label: "NOTIFICATION SETTINGS" },
     { id: "notifications", label: "NOTIFICATION LOG" },
     { id: "logins", label: "LOGIN ACTIVITY" },
   ];
@@ -127,6 +130,38 @@ export default function AdminMonitoringTab({
             </li>
           ))}
         </ul>
+          </>
+        )}
+
+        {activeView === "settings" && (
+          <>
+        <h3>Notification Settings</h3>
+        <p className="hint">Enable or disable customer notification services per event type.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Enabled</th>
+            </tr>
+          </thead>
+          <tbody>
+            {adminNotificationPreferences.map((pref) => (
+              <tr key={pref.eventKey}>
+                <td>{pref.eventLabel}</td>
+                <td>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(pref.isEnabled)}
+                      onChange={(e) => onAdminToggleNotificationPreference(pref.eventKey, e.target.checked)}
+                    />
+                    {pref.isEnabled ? "Enabled" : "Disabled"}
+                  </label>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
           </>
         )}
 

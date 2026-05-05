@@ -41,6 +41,8 @@ export default function AdminPage({
   onAdminReverseTransaction,
   adminLoginLogs,
   adminNotificationLogs,
+  adminNotificationPreferences,
+  onAdminToggleNotificationPreference,
   adminReport,
   adminLastUpdated,
   interestRate,
@@ -140,6 +142,8 @@ export default function AdminPage({
               onAdminReverseTransaction={onAdminReverseTransaction}
               adminLoginLogs={adminLoginLogs}
               adminNotificationLogs={adminNotificationLogs}
+              adminNotificationPreferences={adminNotificationPreferences}
+              onAdminToggleNotificationPreference={onAdminToggleNotificationPreference}
             />
           )}
           {activeSection === "Compliance" && (

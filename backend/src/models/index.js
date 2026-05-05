@@ -10,6 +10,7 @@ const Registration = require('./Registration');
 const Admin = require('./Admin');
 const LoginLog = require('./LoginLog');
 const NotificationLog = require('./NotificationLog');
+const NotificationPreference = require('./NotificationPreference');
 const ActivityLog = require('./ActivityLog');
 const StatementRequest = require('./StatementRequest');
 const BusinessLayerAccount = require('./BusinessLayerAccount');
@@ -71,6 +72,7 @@ module.exports = {
   Admin,
   LoginLog,
   NotificationLog,
+  NotificationPreference,
   ActivityLog,
   StatementRequest,
   BusinessLayerAccount,

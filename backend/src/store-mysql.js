@@ -15,6 +15,7 @@ const {
   Admin,
   LoginLog,
   NotificationLog,
+  NotificationPreference,
 } = require("./models");
 
 let HIGH_VALUE_OTP_THRESHOLD = 10000;
@@ -27,6 +28,13 @@ const SIMPLE_ACCESS_MONTHLY_FEE = 2.5;
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
 const ACCOUNT_LOCK_MINUTES = 15;
 const VERIFICATION_TOKEN_TTL_MS = 60 * 60 * 1000;
+const NOTIFICATION_EVENTS = [
+  { eventKey: "LOAN_PAYMENT_DUE", eventLabel: "Loan payment due" },
+  { eventKey: "CREDIT_CARD_TRANSACTION", eventLabel: "Credit card transactions" },
+  { eventKey: "BILL_PAYMENT", eventLabel: "Bill payments" },
+  { eventKey: "TRANSFER_SENT", eventLabel: "Money sent" },
+  { eventKey: "MONEY_RECEIVED", eventLabel: "Money received" },
+];
 
 function nowIso() {
   return new Date().toISOString();
@@ -249,14 +257,18 @@ async function addNotification(customerId, message, notificationType = "SMS_ALER
     throw new Error("Customer not found");
   }
 
+  const normalizedType = String(notificationType || "SMS_ALERT").trim().toUpperCase();
+  const notificationsEnabled = await isNotificationEnabled(normalizedType);
+
   const phoneNumber = String(customer.mobile || "").trim();
-  if (!phoneNumber) {
+  if (!notificationsEnabled || !phoneNumber) {
+    const deliveryStatus = notificationsEnabled ? "skipped" : "disabled";
     const skippedRow = await NotificationLog.create({
       userId: customer.id,
-      phoneNumber: "",
+      phoneNumber: phoneNumber || "",
       message: String(message || ""),
-      notificationType,
-      deliveryStatus: "skipped",
+      notificationType: normalizedType,
+      deliveryStatus,
       providerMessageId: null,
     });
 
@@ -287,7 +299,7 @@ async function addNotification(customerId, message, notificationType = "SMS_ALER
     userId: customer.id,
     phoneNumber,
     message: String(message || ""),
-    notificationType,
+    notificationType: normalizedType,
     deliveryStatus,
     providerMessageId,
   });
@@ -301,6 +313,66 @@ async function addNotification(customerId, message, notificationType = "SMS_ALER
     deliveryStatus: row.deliveryStatus,
     timestamp: row.createdAt,
   };
+}
+
+async function ensureNotificationPreferences() {
+  for (const event of NOTIFICATION_EVENTS) {
+    await NotificationPreference.findOrCreate({
+      where: { eventKey: event.eventKey },
+      defaults: {
+        eventLabel: event.eventLabel,
+        isEnabled: true,
+      },
+    });
+  }
+}
+
+async function getNotificationPreferences() {
+  await ensureNotificationPreferences();
+  const rows = await NotificationPreference.findAll({
+    order: [["id", "ASC"]],
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    eventKey: row.eventKey,
+    eventLabel: row.eventLabel,
+    isEnabled: Boolean(row.isEnabled),
+    updatedAt: row.updatedAt,
+  }));
+}
+
+async function updateNotificationPreference(eventKey, isEnabled) {
+  const normalizedKey = String(eventKey || "").trim().toUpperCase();
+  const matchedEvent = NOTIFICATION_EVENTS.find((event) => event.eventKey === normalizedKey);
+  if (!matchedEvent) {
+    throw new Error("Unsupported notification event");
+  }
+
+  await ensureNotificationPreferences();
+  const row = await NotificationPreference.findOne({ where: { eventKey: normalizedKey } });
+  if (!row) {
+    throw new Error("Notification preference not found");
+  }
+  await row.update({ isEnabled: Boolean(isEnabled), eventLabel: matchedEvent.eventLabel });
+
+  return {
+    id: row.id,
+    eventKey: row.eventKey,
+    eventLabel: row.eventLabel,
+    isEnabled: Boolean(row.isEnabled),
+    updatedAt: row.updatedAt,
+  };
+}
+
+async function isNotificationEnabled(notificationType) {
+  const normalizedType = String(notificationType || "").trim().toUpperCase();
+  const hasEvent = NOTIFICATION_EVENTS.some((event) => event.eventKey === normalizedType);
+  if (!hasEvent) {
+    return true;
+  }
+  await ensureNotificationPreferences();
+  const row = await NotificationPreference.findOne({ where: { eventKey: normalizedType } });
+  return row ? Boolean(row.isEnabled) : true;
 }
 
 function isAccountLocked(customer) {
@@ -1608,6 +1680,8 @@ module.exports = {
   getHighValueTransferThreshold,
   setHighValueTransferThreshold,
   getNotificationLogs,
+  getNotificationPreferences,
+  updateNotificationPreference,
   generateRandomAccountNumber,
   generateRandomAccountPin,
   registerUser,
