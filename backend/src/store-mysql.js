@@ -5,6 +5,11 @@ const { Op, where, fn, col } = require("sequelize");
 const { sendSms } = require("./services/smsService");
 const { sendVerificationEmail } = require("./services/emailService");
 const {
+  getNotificationPreferences,
+  updateNotificationPreference,
+  isNotificationEnabled,
+} = require("./services/notificationPreferenceService");
+const {
   Customer,
   Account,
   Transaction,
@@ -249,14 +254,18 @@ async function addNotification(customerId, message, notificationType = "SMS_ALER
     throw new Error("Customer not found");
   }
 
+  const normalizedType = String(notificationType || "SMS_ALERT").trim().toUpperCase();
+  const notificationsEnabled = await isNotificationEnabled(normalizedType);
+
   const phoneNumber = String(customer.mobile || "").trim();
-  if (!phoneNumber) {
+  if (!notificationsEnabled || !phoneNumber) {
+    const deliveryStatus = notificationsEnabled ? "skipped" : "disabled";
     const skippedRow = await NotificationLog.create({
       userId: customer.id,
-      phoneNumber: "",
+      phoneNumber: phoneNumber || "",
       message: String(message || ""),
-      notificationType,
-      deliveryStatus: "skipped",
+      notificationType: normalizedType,
+      deliveryStatus,
       providerMessageId: null,
     });
 
@@ -287,7 +296,7 @@ async function addNotification(customerId, message, notificationType = "SMS_ALER
     userId: customer.id,
     phoneNumber,
     message: String(message || ""),
-    notificationType,
+    notificationType: normalizedType,
     deliveryStatus,
     providerMessageId,
   });
@@ -1608,6 +1617,8 @@ module.exports = {
   getHighValueTransferThreshold,
   setHighValueTransferThreshold,
   getNotificationLogs,
+  getNotificationPreferences,
+  updateNotificationPreference,
   generateRandomAccountNumber,
   generateRandomAccountPin,
   registerUser,

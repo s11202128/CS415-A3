@@ -23,6 +23,8 @@ const {
   setHighValueTransferThreshold,
   getNotificationLogs,
   addNotification,
+  getNotificationPreferences,
+  updateNotificationPreference,
   getDashboard,
   updateProfile,
   getLoginLogs,
@@ -2216,6 +2218,17 @@ router.get("/notifications/history", requireAuth, asyncHandler(async (req, res) 
 router.get("/admin/notifications/logs", asyncHandler(async (req, res) => {
   const limit = Number(req.query.limit || 200);
   res.json(await getNotificationLogs(limit));
+}));
+
+router.get("/admin/notifications/preferences", asyncHandler(async (req, res) => {
+  res.json(await getNotificationPreferences());
+}));
+
+router.put("/admin/notifications/preferences/:eventKey", asyncHandler(async (req, res) => {
+  const eventKey = String(req.params.eventKey || "").trim();
+  const isEnabled = Boolean(req.body?.isEnabled);
+  const updated = await updateNotificationPreference(eventKey, isEnabled);
+  res.json(updated);
 }));
 
 router.get("/admin/otp-attempts", asyncHandler(async (req, res) => {

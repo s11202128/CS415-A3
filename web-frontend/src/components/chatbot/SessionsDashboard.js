@@ -93,10 +93,10 @@ export default function SessionsDashboard({ authToken, apiBase = "/api" }) {
         </button>
       </div>
 
-      {error && <p style={{ color: "#b00020" }}>{error}</p>}
+      {error && <p className="bof-issues-error">{error}</p>}
 
-      <div style={{ overflowX: "auto" }}>
-        <table className="bof-issues-table">
+      <div className="bof-sessions-scroll">
+        <table className="bof-issues-table bof-sessions-table">
           <thead>
             <tr>
               <th>Session ID</th>
@@ -113,24 +113,24 @@ export default function SessionsDashboard({ authToken, apiBase = "/api" }) {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} style={{ textAlign: "center", color: "#777", padding: 20 }}>
+                <td colSpan={9} className="bof-sessions-empty">
                   {loading ? "Loading..." : "No sessions found."}
                 </td>
               </tr>
             )}
             {filtered.map((s) => (
               <tr key={s.sessionId}>
-                <td style={{ fontFamily: "monospace", fontSize: 11 }}>
+                <td className="bof-sessions-id">
                   {s.sessionId.slice(0, 12)}…
                 </td>
                 <td>
                   {s.customerName}
                   {s.customerEmail && (
-                    <div style={{ fontSize: 11, color: "#666" }}>{s.customerEmail}</div>
+                    <div className="bof-sessions-subtext">{s.customerEmail}</div>
                   )}
                 </td>
-                <td style={{ maxWidth: 300 }}>{s.summary || "—"}</td>
-                <td style={{ textAlign: "center" }}>{s.messageCount}</td>
+                <td className="bof-sessions-summary">{s.summary || "—"}</td>
+                <td className="bof-sessions-center">{s.messageCount}</td>
                 <td>
                   <span className={`bof-pill ${s.status === "open" ? "unresolved" : s.status}`}>
                     {s.status}
@@ -139,18 +139,18 @@ export default function SessionsDashboard({ authToken, apiBase = "/api" }) {
                 <td>
                   {s.rating ? `${s.rating} ★` : "—"}
                   {s.comment && (
-                    <div style={{ fontSize: 11, color: "#666", maxWidth: 160 }}>
+                    <div className="bof-sessions-comment">
                       “{s.comment}”
                     </div>
                   )}
                 </td>
-                <td style={{ fontSize: 12 }}>{fmt(s.startedAt)}</td>
-                <td style={{ fontSize: 12 }}>{fmt(s.endedAt)}</td>
+                <td className="bof-sessions-date">{fmt(s.startedAt)}</td>
+                <td className="bof-sessions-date">{fmt(s.endedAt)}</td>
                 <td>
                   <button
                     type="button"
                     onClick={() => loadSession(s.sessionId)}
-                    style={{ fontSize: 12 }}
+                    className="bof-sessions-view-btn"
                   >
                     View
                   </button>
@@ -177,7 +177,7 @@ export default function SessionsDashboard({ authToken, apiBase = "/api" }) {
             {selectedLoading && <p>Loading...</p>}
             {selected && (
               <div>
-                <div style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>
+                <div className="bof-session-info">
                   <div><b>ID:</b> {selected.sessionId}</div>
                   <div><b>Customer:</b> {selected.customerName} {selected.customerEmail && `(${selected.customerEmail})`}</div>
                   <div><b>Status:</b> {selected.status} · <b>Messages:</b> {selected.messageCount}</div>
@@ -190,7 +190,7 @@ export default function SessionsDashboard({ authToken, apiBase = "/api" }) {
                       <div className="bof-session-a"><b>Bot:</b> {it.response}</div>
                       <div className="bof-session-meta">
                         <span className={`bof-pill ${it.status}`}>{it.status}</span>
-                        <span style={{ marginLeft: 8 }}>{fmt(it.createdAt)}</span>
+                        <span className="bof-session-meta-time">{fmt(it.createdAt)}</span>
                       </div>
                     </div>
                   ))}
