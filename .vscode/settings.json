@@ -11,8 +11,9 @@
     ],
 
     // ---------- Vitest (vitest.explorer) ----------
-    "vitest.workspaceConfig": "./web-frontend/vite.config.js",
-    "vitest.rootConfig": "./web-frontend/vite.config.js",
+    // The extension auto-discovers web-frontend/vite.config.js — no explicit path needed.
+    // (Setting vitest.workspaceConfig here would be wrong: that key expects a
+    // multi-project root file exporting an array of project paths.)
 
     // ---------- Java / Gradle (vscjava.vscode-java-pack + vscjava.vscode-gradle) ----------
     "java.test.config": {
