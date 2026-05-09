@@ -1568,6 +1568,8 @@ router.post("/bills/manual", requireAuth, asyncHandler(async (req, res) => {
     payee: payload.payee,
     amount: Number(payload.amount),
     mode: "manual",
+    paymentMethod: payload.paymentMethod || "account",
+    paymentSourceId: payload.paymentSourceId || String(account.id),
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1584,6 +1586,8 @@ router.post("/bill-payment", requireAuth, asyncHandler(async (req, res) => {
     amount: Number(payload.amount),
     mode: payload.mode || "manual",
     scheduledDate: payload.scheduledDate || null,
+    paymentMethod: payload.paymentMethod || "account",
+    paymentSourceId: payload.paymentSourceId || String(account.id),
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1600,6 +1604,8 @@ router.post("/pay-bill", requireAuth, asyncHandler(async (req, res) => {
     amount: Number(payload.amount),
     mode: payload.mode || "manual",
     scheduledDate: payload.scheduledDate || null,
+    paymentMethod: payload.paymentMethod || "account",
+    paymentSourceId: payload.paymentSourceId || String(account.id),
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1616,6 +1622,8 @@ router.post("/bills/scheduled", requireAuth, asyncHandler(async (req, res) => {
     amount: Number(payload.amount),
     scheduledDate: payload.scheduledDate,
     recurrence: payload.frequency || payload.recurrence || "once",
+    paymentMethod: payload.paymentMethod || "account",
+    paymentSourceId: payload.paymentSourceId || String(account.id),
   });
   res.status(201).json({ ...row, accountNumber: account.accountNumber });
 }));
@@ -1632,6 +1640,8 @@ router.post("/schedule-payment", requireAuth, asyncHandler(async (req, res) => {
     amount: Number(payload.amount),
     scheduledDate: payload.scheduledDate,
     recurrence: payload.frequency || payload.recurrence || "once",
+    paymentMethod: payload.paymentMethod || "account",
+    paymentSourceId: payload.paymentSourceId || String(account.id),
   });
   res.status(201).json({ ...row, accountNumber: account.accountNumber });
 }));
@@ -1650,6 +1660,8 @@ router.get("/bills/scheduled", requireAuth, asyncHandler(async (req, res) => {
       amount: Number(b.amount),
       scheduledDate: b.dueDate,
       recurrence: b.recurrence || "once",
+      paymentMethod: b.payment_method || "account",
+      paymentSourceId: b.payment_source_id,
       status: "scheduled",
       createdAt: b.createdAt,
     }))
@@ -1671,6 +1683,8 @@ router.get("/bills/history", requireAuth, asyncHandler(async (req, res) => {
       amount: Number(b.amount),
       scheduledDate: b.dueDate,
       recurrence: b.recurrence || "once",
+      paymentMethod: b.payment_method || "account",
+      paymentSourceId: b.payment_source_id,
       status: b.status,
       createdAt: b.createdAt,
       description: b.description,

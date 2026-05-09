@@ -81,9 +81,10 @@ export default function App() {
   const [pendingTransfer, setPendingTransfer] = useState({ transferId: "", otp: "" });
   const [transferStartOption, setTransferStartOption] = useState("");
 
-  const [manualBillForm, setManualBillForm] = useState({ accountId: "", payee: "", amount: "" });
-  const [scheduleBillForm, setScheduleBillForm] = useState({ accountId: "", payee: "", amount: "", scheduledDate: "" });
+  const [manualBillForm, setManualBillForm] = useState({ accountId: "", payee: "", amount: "", paymentMethod: "account", paymentSourceId: "" });
+  const [scheduleBillForm, setScheduleBillForm] = useState({ accountId: "", payee: "", amount: "", scheduledDate: "", paymentMethod: "account", paymentSourceId: "" });
   const [billMessage, setBillMessage] = useState("");
+  const [creditCards, setCreditCards] = useState([]);
 
   const [loanForm, setLoanForm] = useState({
     customerId: "",
@@ -179,6 +180,7 @@ export default function App() {
         api.getInterestRate(),
         hasAdminScopeForFetch ? api.getSummaries() : Promise.resolve([]),
         api.getStatementRequests(),
+        api.getMyCreditCards(),
       ]);
       const valueOr = (idx, fallback) => (settled[idx].status === "fulfilled" ? settled[idx].value : fallback);
       const customerRows = valueOr(0, []);
@@ -190,6 +192,7 @@ export default function App() {
       const rate = valueOr(6, { reserveBankMinSavingsInterestRate: 0 });
       const sumRows = valueOr(7, []);
       const statementRequestRows = valueOr(8, []);
+      const creditCardRows = valueOr(9, { items: [] });
       // Log non-fatal failures without showing global error banner
       settled.forEach((r, i) => {
         if (r.status === "rejected") {
@@ -218,6 +221,7 @@ export default function App() {
       setLoanApplications(visibleLoanApplications);
       setInterestRate(rate.reserveBankMinSavingsInterestRate);
       setSummaries(visibleSummaries);
+      setCreditCards(creditCardRows.items || []);
       setBillHistory(
         hasAdminScope
           ? billHistoryRows
@@ -863,6 +867,7 @@ export default function App() {
         {!loading && currentUser && activeTab === "Bill Payments" && (
           <BillPaymentsPage
             accounts={accounts}
+            creditCards={creditCards}
             manualBillForm={manualBillForm}
             setManualBillForm={setManualBillForm}
             onManualBill={onManualBill}

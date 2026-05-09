@@ -16,6 +16,7 @@ import AccountCardsRow from "../account/AccountCardsRow";
 
 export default function BillPaymentsTab({
   accounts,
+  creditCards = [],
   manualBillForm,
   setManualBillForm,
   onManualBill,
@@ -263,23 +264,113 @@ export default function BillPaymentsTab({
           <>
           <div className="grid gap-6 lg:grid-cols-[1.35fr,0.9fr]">
             <form onSubmit={handleBillSubmit} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Debit Account
-                  <select
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-navy-900"
-                    value={manualBillForm.accountId || ""}
-                    onChange={(e) => updateSharedBillDetails("accountId", e.target.value)}
-                    required
-                  >
-                    <option value="">Select account</option>
-                    {(accounts || []).map((account) => (
-                      <option key={account.id} value={account.id}>
-                        {account.accountNumber} (#{account.id})
-                      </option>
-                    ))}
-                  </select>
+                  Payment Method
                 </label>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <button
+                    type="button"
+                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                      manualBillForm.paymentMethod === "account"
+                        ? "bg-gradient-to-r from-navy-900 to-cyan-600 text-white shadow-md"
+                        : "bg-white text-navy-900 border border-slate-200 hover:bg-slate-50"
+                    }`}
+                    onClick={() => {
+                      setManualBillForm({
+                        ...manualBillForm,
+                        paymentMethod: "account",
+                        paymentSourceId: String(manualBillForm.accountId || ""),
+                      });
+                      setScheduleBillForm({
+                        ...scheduleBillForm,
+                        paymentMethod: "account",
+                        paymentSourceId: String(scheduleBillForm.accountId || ""),
+                      });
+                    }}
+                  >
+                    🏦 Bank Account
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                      manualBillForm.paymentMethod === "credit_card"
+                        ? "bg-gradient-to-r from-navy-900 to-cyan-600 text-white shadow-md"
+                        : "bg-white text-navy-900 border border-slate-200 hover:bg-slate-50"
+                    }`}
+                    onClick={() => {
+                      setManualBillForm({
+                        ...manualBillForm,
+                        paymentMethod: "credit_card",
+                        paymentSourceId: "",
+                      });
+                      setScheduleBillForm({
+                        ...scheduleBillForm,
+                        paymentMethod: "credit_card",
+                        paymentSourceId: "",
+                      });
+                    }}
+                  >
+                    💳 Credit Card
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {manualBillForm.paymentMethod === "account" ? (
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Debit Account
+                    <select
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-navy-900"
+                      value={manualBillForm.accountId || ""}
+                      onChange={(e) => {
+                        updateSharedBillDetails("accountId", e.target.value);
+                        setManualBillForm((prev) => ({
+                          ...prev,
+                          paymentSourceId: String(e.target.value),
+                        }));
+                        setScheduleBillForm((prev) => ({
+                          ...prev,
+                          paymentSourceId: String(e.target.value),
+                        }));
+                      }}
+                      required
+                    >
+                      <option value="">Select account</option>
+                      {(accounts || []).map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.accountNumber} (#{account.id})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Credit Card
+                    <select
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-navy-900"
+                      value={manualBillForm.paymentSourceId || ""}
+                      onChange={(e) => {
+                        setManualBillForm({
+                          ...manualBillForm,
+                          paymentSourceId: e.target.value,
+                        });
+                        setScheduleBillForm({
+                          ...scheduleBillForm,
+                          paymentSourceId: e.target.value,
+                        });
+                      }}
+                      required
+                    >
+                      <option value="">Select credit card</option>
+                      {(creditCards || []).map((card) => (
+                        <option key={card.cardNumber} value={card.cardNumber}>
+                          {card.cardNumber} (Available: {FJD(card.availableCredit || 0)})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
 
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Payment Type

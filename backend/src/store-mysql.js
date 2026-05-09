@@ -20,6 +20,7 @@ const {
   Admin,
   LoginLog,
   NotificationLog,
+  BusinessLayerCard,
 } = require("./models");
 
 let HIGH_VALUE_OTP_THRESHOLD = 10000;
@@ -638,7 +639,7 @@ async function verifyTransfer({ transferId, otp }) {
 }
 
 // Post a bill payment
-async function postBillPayment({ accountId, payee, amount, mode, scheduledDate }) {
+async function postBillPayment({ accountId, payee, amount, mode, scheduledDate, paymentMethod = 'account', paymentSourceId = null }) {
   const account = await getAccount(accountId);
   if (!account) {
     throw new Error("Account not found");
@@ -646,25 +647,66 @@ async function postBillPayment({ accountId, payee, amount, mode, scheduledDate }
   if (amount <= 0) {
     throw new Error("Amount must be greater than 0");
   }
-  if (["frozen", "suspended", "closed"].includes(String(account.status || "").toLowerCase())) {
-    throw new Error("Selected account is not available for bill payments");
-  }
 
-  await createTransaction({
-    accountId,
-    kind: "debit",
-    amount,
-    description: `Bill payment to ${payee}`,
-    metadata: { mode },
-  });
+  let sourcePaymentData = {
+    payment_method: paymentMethod,
+    payment_source_id: paymentSourceId,
+  };
+
+  if (paymentMethod === 'credit_card') {
+    // Credit card payment flow
+    const card = await BusinessLayerCard.findOne({
+      where: { cardNumber: paymentSourceId },
+    });
+    if (!card) {
+      throw new Error("Credit card not found");
+    }
+    if (String(card.customerId) !== String(account.customerId)) {
+      throw new Error("Credit card does not belong to this customer");
+    }
+    if (card.frozen) {
+      throw new Error("This credit card is frozen and cannot be used");
+    }
+    const availableCredit = card.creditLimit - card.currentBalance;
+    if (availableCredit < amount) {
+      throw new Error(`Insufficient credit available. Available: $${availableCredit.toFixed(2)}`);
+    }
+
+    // Charge the card: increase current balance (credit debt)
+    const newBalance = parseFloat(card.currentBalance) + amount;
+    await BusinessLayerCard.update(
+      { currentBalance: newBalance },
+      { where: { id: card.id } }
+    );
+
+    sourcePaymentData.payment_source_id = card.cardNumber;
+  } else {
+    // Account debit flow (default)
+    if (["frozen", "suspended", "closed"].includes(String(account.status || "").toLowerCase())) {
+      throw new Error("Selected account is not available for bill payments");
+    }
+
+    await createTransaction({
+      accountId,
+      kind: "debit",
+      amount,
+      description: `Bill payment to ${payee}`,
+      metadata: { mode },
+    });
+
+    sourcePaymentData.payment_method = 'account';
+    sourcePaymentData.payment_source_id = String(accountId);
+  }
 
   const payment = await Bill.create({
     customerId: account.customerId,
     billType: payee,
     amount,
     status: "paid",
-    description: `account:${accountId};mode:${mode}`,
+    description: `${sourcePaymentData.payment_method}:${sourcePaymentData.payment_source_id};mode:${mode}`,
     dueDate: scheduledDate || null,
+    payment_method: sourcePaymentData.payment_method,
+    payment_source_id: sourcePaymentData.payment_source_id,
   });
 
   const paymentType = /credit\s*card/i.test(String(payee || "")) ? "CREDIT_CARD_PAYMENT" : "BILL_PAYMENT";
@@ -679,16 +721,31 @@ async function postBillPayment({ accountId, payee, amount, mode, scheduledDate }
     payee,
     amount,
     mode,
+    paymentMethod: sourcePaymentData.payment_method,
+    paymentSourceId: sourcePaymentData.payment_source_id,
     status: "processed",
     createdAt: payment.createdAt,
   };
 }
 
 // Schedule a bill payment
-async function scheduleBillPayment({ accountId, payee, amount, scheduledDate, recurrence = "once" }) {
+async function scheduleBillPayment({ accountId, payee, amount, scheduledDate, recurrence = "once", paymentMethod = 'account', paymentSourceId = null }) {
   const account = await getAccount(accountId);
   if (!account) {
     throw new Error("Account not found");
+  }
+
+  if (paymentMethod === 'credit_card') {
+    // Validate card before scheduling
+    const card = await BusinessLayerCard.findOne({
+      where: { cardNumber: paymentSourceId },
+    });
+    if (!card) {
+      throw new Error("Credit card not found");
+    }
+    if (String(card.customerId) !== String(account.customerId)) {
+      throw new Error("Credit card does not belong to this customer");
+    }
   }
 
   const normalizedRecurrence = normalizeBillRecurrence(recurrence);
@@ -700,7 +757,9 @@ async function scheduleBillPayment({ accountId, payee, amount, scheduledDate, re
     status: "scheduled",
     dueDate: new Date(scheduledDate),
     recurrence: normalizedRecurrence,
-    description: `scheduled_account:${accountId}`,
+    description: `scheduled_${paymentMethod}:${paymentSourceId || accountId}`,
+    payment_method: paymentMethod,
+    payment_source_id: paymentSourceId || String(accountId),
   });
 
   return {
@@ -710,6 +769,8 @@ async function scheduleBillPayment({ accountId, payee, amount, scheduledDate, re
     amount,
     scheduledDate,
     recurrence: normalizedRecurrence,
+    paymentMethod,
+    paymentSourceId: paymentSourceId || String(accountId),
     status: "scheduled",
     createdAt: bill.createdAt,
   };
@@ -747,6 +808,8 @@ async function runScheduledPayment(id) {
     amount: scheduled.amount,
     mode: "scheduled",
     scheduledDate: scheduled.dueDate,
+    paymentMethod: scheduled.payment_method || 'account',
+    paymentSourceId: scheduled.payment_source_id || String(account.id),
   });
 
   await scheduled.update({ status: "paid" });
@@ -765,7 +828,9 @@ async function runScheduledPayment(id) {
       status: "scheduled",
       dueDate: nextDueDate,
       recurrence,
-      description: `scheduled_account:${account.id}`,
+      description: `scheduled_${scheduled.payment_method || 'account'}:${scheduled.payment_source_id || account.id}`,
+      payment_method: scheduled.payment_method || 'account',
+      payment_source_id: scheduled.payment_source_id || String(account.id),
     });
     nextScheduled = {
       id: nextRow.id,
@@ -774,6 +839,8 @@ async function runScheduledPayment(id) {
       amount: Number(nextRow.amount),
       scheduledDate: nextRow.dueDate,
       recurrence,
+      paymentMethod: nextRow.payment_method || 'account',
+      paymentSourceId: nextRow.payment_source_id || String(account.id),
       status: nextRow.status,
       createdAt: nextRow.createdAt,
     };

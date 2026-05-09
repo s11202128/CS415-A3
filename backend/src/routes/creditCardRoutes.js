@@ -71,6 +71,36 @@ router.get("/list", async (req, res) => {
   }
 });
 
+// GET /api/creditcard/my-cards — customer-scoped listing of own credit cards.
+router.get("/my-cards", requireAuth, async (req, res) => {
+  try {
+    const customerId = String(req.auth?.customerId);
+    if (!customerId || customerId === "undefined") {
+      return sendError(res, 401, "Authentication required");
+    }
+
+    const rows = await BusinessLayerCard.findAll({
+      where: { customerId },
+      order: [["id", "ASC"]],
+    });
+
+    const items = rows.map((row) => {
+      const card = hydrate(row);
+      return {
+        cardNumber: card.cardNumber,
+        creditLimit: Number(card.creditLimit),
+        currentBalance: Number(card.currentBalance),
+        availableCredit: card.getAvailableCredit(),
+        statementDue: card.statementDue,
+        frozen: Boolean(row.frozen),
+      };
+    });
+    res.json({ count: items.length, items });
+  } catch (err) {
+    sendError(res, 500, err.message);
+  }
+});
+
 // POST /api/creditcard/create
 router.post("/create", async (req, res) => {
   try {

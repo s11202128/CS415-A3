@@ -166,6 +166,7 @@ export const api = {
   getScheduledBills: () => request("/bills/scheduled"),
   getBillHistory: () => request("/bills/history"),
   runScheduledBill: (id) => request(`/bills/scheduled/${id}/run`, { method: "POST" }),
+  getMyCreditCards: () => request("/creditcard/my-cards"),
   getStatement: (accountId) => request(`/statements/${accountId}`),
   createStatementRequest: (body) => request("/statements/request", { method: "POST", body: JSON.stringify(body) }),
   getStatementRequests: () => request("/statements/requests"),
