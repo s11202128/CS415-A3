@@ -3,7 +3,7 @@
 const express = require("express");
 const { Op } = require("sequelize");
 const CreditCardAccount = require("../models/business/CreditCardAccount");
-const { BusinessLayerCard, Customer } = require("../models");
+const { BusinessLayerCard, CreditCardTransaction, Customer } = require("../models");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
 
 const router = express.Router();
@@ -34,6 +34,41 @@ async function loadOrFail(res, id) {
     return null;
   }
   return row;
+}
+
+async function resolveAuthorizedCustomerIds(req) {
+  const idCandidates = new Set();
+  const authCustomerId = Number(req.auth?.customerId || 0);
+  const authUserId = Number(req.auth?.userId || 0);
+  const requestedCustomerId = Number(req.query?.customerId || 0);
+
+  if (Number.isInteger(authCustomerId) && authCustomerId > 0) {
+    idCandidates.add(String(authCustomerId));
+  }
+  if (Number.isInteger(authUserId) && authUserId > 0) {
+    idCandidates.add(String(authUserId));
+  }
+
+  if (req.auth?.isAdmin && Number.isInteger(requestedCustomerId) && requestedCustomerId > 0) {
+    idCandidates.add(String(requestedCustomerId));
+  }
+
+  const email = String(req.auth?.email || "").trim().toLowerCase();
+  if (email) {
+    const emailCustomer = await Customer.findOne({
+      where: {
+        [Op.or]: [
+          { email },
+          { email: { [Op.like]: email } },
+        ],
+      },
+    });
+    if (emailCustomer?.id) {
+      idCandidates.add(String(emailCustomer.id));
+    }
+  }
+
+  return Array.from(idCandidates);
 }
 
 // GET /api/creditcard/list — admin-friendly listing with customer name + available credit.
@@ -75,40 +110,7 @@ router.get("/list", async (req, res) => {
 // GET /api/creditcard/my-cards — customer-scoped listing of own credit cards.
 router.get("/my-cards", requireAuth, async (req, res) => {
   try {
-    const idCandidates = new Set();
-    const authCustomerId = Number(req.auth?.customerId || 0);
-    const authUserId = Number(req.auth?.userId || 0);
-    const requestedCustomerId = Number(req.query?.customerId || 0);
-
-    if (Number.isInteger(authCustomerId) && authCustomerId > 0) {
-      idCandidates.add(String(authCustomerId));
-    }
-    if (Number.isInteger(authUserId) && authUserId > 0) {
-      idCandidates.add(String(authUserId));
-    }
-
-    // Admins can inspect a specific customer's cards when customerId is supplied.
-    if (req.auth?.isAdmin && Number.isInteger(requestedCustomerId) && requestedCustomerId > 0) {
-      idCandidates.add(String(requestedCustomerId));
-    }
-
-    // Fallback: derive customer id by authenticated email if ids are not aligned.
-    const email = String(req.auth?.email || "").trim().toLowerCase();
-    if (email) {
-      const emailCustomer = await Customer.findOne({
-        where: {
-          [Op.or]: [
-            { email },
-            { email: { [Op.like]: email } },
-          ],
-        },
-      });
-      if (emailCustomer?.id) {
-        idCandidates.add(String(emailCustomer.id));
-      }
-    }
-
-    const customerIds = Array.from(idCandidates);
+    const customerIds = await resolveAuthorizedCustomerIds(req);
     if (!customerIds.length) {
       return sendError(res, 401, "Authentication required");
     }
@@ -192,9 +194,24 @@ router.post("/:id/charge", async (req, res) => {
     if (row.frozen) {
       return sendError(res, 423, "Card is frozen. Unfreeze before posting a charge.");
     }
+
+    const amount = Number(req.body?.amount);
+    const description = String(req.body?.description || "").trim();
+
     const card = hydrate(row);
-    card.charge(req.body?.amount);
+    card.charge(amount);
     await persist(row, card);
+
+    await CreditCardTransaction.create({
+      cardNumber: card.cardNumber,
+      customerId: String(row.customerId),
+      kind: "charge",
+      amount,
+      description: description || "Card purchase",
+      balanceAfter: card.currentBalance,
+      performedByUserId: Number(req.auth?.userId || 0) || null,
+    });
+
     res.json({
       cardNumber: card.cardNumber,
       currentBalance: card.currentBalance,
@@ -213,9 +230,23 @@ router.post("/:id/payment", async (req, res) => {
     if (row.frozen) {
       return sendError(res, 423, "Card is frozen. Unfreeze before posting a payment.");
     }
+
+    const amount = Number(req.body?.amount);
+
     const card = hydrate(row);
-    card.makePayment(req.body?.amount);
+    card.makePayment(amount);
     await persist(row, card);
+
+    await CreditCardTransaction.create({
+      cardNumber: card.cardNumber,
+      customerId: String(row.customerId),
+      kind: "payment",
+      amount,
+      description: "Card payment",
+      balanceAfter: card.currentBalance,
+      performedByUserId: Number(req.auth?.userId || 0) || null,
+    });
+
     res.json({
       cardNumber: card.cardNumber,
       currentBalance: card.currentBalance,
@@ -232,6 +263,54 @@ router.get("/:id/summary", async (req, res) => {
     const row = await loadOrFail(res, req.params.id);
     if (!row) return;
     res.json(hydrate(row).toSummary());
+  } catch (err) {
+    sendError(res, 500, err.message);
+  }
+});
+
+// GET /api/creditcard/:id/transactions — card transaction history.
+router.get("/:id/transactions", requireAuth, async (req, res) => {
+  try {
+    const row = await loadOrFail(res, req.params.id);
+    if (!row) return;
+
+    if (!req.auth?.isAdmin) {
+      const customerIds = await resolveAuthorizedCustomerIds(req);
+      if (!customerIds.includes(String(row.customerId))) {
+        return sendError(res, 403, "Forbidden");
+      }
+    }
+
+    const kind = String(req.query.kind || "").trim().toLowerCase();
+    if (kind && !["charge", "payment"].includes(kind)) {
+      return sendError(res, 400, "kind must be charge or payment");
+    }
+
+    const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 20));
+    const where = {
+      cardNumber: String(row.cardNumber),
+      ...(kind ? { kind } : {}),
+    };
+
+    const rows = await CreditCardTransaction.findAll({
+      where,
+      order: [["createdAt", "DESC"]],
+      limit,
+    });
+
+    res.json({
+      count: rows.length,
+      items: rows.map((item) => ({
+        id: item.id,
+        cardNumber: item.cardNumber,
+        customerId: item.customerId,
+        kind: item.kind,
+        amount: Number(item.amount),
+        description: item.description,
+        balanceAfter: Number(item.balanceAfter),
+        createdAt: item.createdAt,
+      })),
+    });
   } catch (err) {
     sendError(res, 500, err.message);
   }

@@ -125,10 +125,10 @@ export const api = {
     }),
   deleteCreditCard: (cardNumber) =>
     request(`/creditcard/${encodeURIComponent(cardNumber)}`, { method: "DELETE" }),
-  chargeCreditCard: (cardNumber, amount) =>
+  chargeCreditCard: (cardNumber, amount, description = "") =>
     request(`/creditcard/${encodeURIComponent(cardNumber)}/charge`, {
       method: "POST",
-      body: JSON.stringify({ amount: Number(amount) }),
+      body: JSON.stringify({ amount: Number(amount), description: String(description || "") }),
     }),
   payCreditCard: (cardNumber, amount) =>
     request(`/creditcard/${encodeURIComponent(cardNumber)}/payment`, {
@@ -167,6 +167,13 @@ export const api = {
   getBillHistory: () => request("/bills/history"),
   runScheduledBill: (id) => request(`/bills/scheduled/${id}/run`, { method: "POST" }),
   getMyCreditCards: () => request("/creditcard/my-cards"),
+  getCreditCardTransactions: (cardNumber, options = {}) => {
+    const query = new URLSearchParams();
+    if (options.kind) query.set("kind", String(options.kind));
+    if (options.limit) query.set("limit", String(options.limit));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request(`/creditcard/${encodeURIComponent(cardNumber)}/transactions${suffix}`);
+  },
   getStatement: (accountId) => request(`/statements/${accountId}`),
   createStatementRequest: (body) => request("/statements/request", { method: "POST", body: JSON.stringify(body) }),
   getStatementRequests: () => request("/statements/requests"),

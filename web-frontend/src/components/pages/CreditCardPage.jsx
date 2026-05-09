@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   CreditCard, Download, ShoppingBag, Coffee, Plane,
@@ -19,6 +19,9 @@ export default function CreditCardPage({ currentUser, creditCards = [], onSelect
   const [hide, setHide] = useState(false);
   const [downloadingStatement, setDownloadingStatement] = useState(false);
   const [statementError, setStatementError] = useState("");
+  const [purchases, setPurchases] = useState([]);
+  const [purchasesLoading, setPurchasesLoading] = useState(false);
+  const [purchasesError, setPurchasesError] = useState("");
 
   const primaryCard = Array.isArray(creditCards) && creditCards.length > 0 ? creditCards[0] : null;
   const limit = Number(primaryCard?.creditLimit || 0);
@@ -37,8 +40,55 @@ export default function CreditCardPage({ currentUser, creditCards = [], onSelect
     ? `${String(primaryCard.cardNumber).slice(0, 4)} ${String(primaryCard.cardNumber).slice(4, 8)} •••• ${String(primaryCard.cardNumber).slice(-4)}`
     : "•••• •••• •••• ••••";
 
-  const purchases = []; // empty until backend feed wired
   const sparkline = Array.from({ length: 14 }, (_, i) => ({ d: i + 1, v: Math.round(Math.random() * 200) }));
+
+  useEffect(() => {
+    async function loadPurchases() {
+      if (!primaryCard?.cardNumber) {
+        setPurchases([]);
+        setPurchasesError("");
+        return;
+      }
+
+      setPurchasesLoading(true);
+      setPurchasesError("");
+      try {
+        const payload = await api.getCreditCardTransactions(primaryCard.cardNumber, {
+          kind: "charge",
+          limit: 20,
+        });
+
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        const mapped = items.map((item) => {
+          const label = String(item.description || "Card purchase");
+          const lower = label.toLowerCase();
+          let icon = "shop";
+          if (lower.includes("coffee") || lower.includes("cafe")) icon = "coffee";
+          else if (lower.includes("flight") || lower.includes("air") || lower.includes("travel")) icon = "plane";
+
+          return {
+            icon,
+            merchant: label,
+            date: new Date(item.createdAt).toLocaleDateString("en-FJ", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            amount: Number(item.amount || 0),
+          };
+        });
+
+        setPurchases(mapped);
+      } catch (err) {
+        setPurchases([]);
+        setPurchasesError(err?.message || "Unable to load card purchases right now.");
+      } finally {
+        setPurchasesLoading(false);
+      }
+    }
+
+    loadPurchases();
+  }, [primaryCard?.cardNumber]);
 
   async function handleDownloadStatement() {
     setStatementError("");
@@ -96,7 +146,7 @@ export default function CreditCardPage({ currentUser, creditCards = [], onSelect
             <div className="grid place-items-center h-9 w-12 rounded-md bg-gradient-to-br from-amber-300 to-amber-500/70" />
           </div>
           <p className="relative mt-6 font-mono tracking-[0.3em] text-lg text-white/90">
-            {hide ? "•••• •••• •••• ••••" : "4521 8932 4567 7783"}
+            {hide ? "•••• •••• •••• ••••" : maskedCardNumber}
           </p>
           <div className="relative mt-5 flex items-end justify-between text-xs text-white/80">
             <div>
@@ -191,7 +241,11 @@ export default function CreditCardPage({ currentUser, creditCards = [], onSelect
 
         <div className="bof-card">
           <h3 className="font-bold text-navy-900 mb-2">Recent Purchases</h3>
-          {purchases.length === 0 ? (
+          {purchasesLoading ? (
+            <p className="text-sm text-slate-600 py-6 text-center">Loading purchases...</p>
+          ) : purchasesError ? (
+            <p className="text-sm text-rose-600 py-6 text-center">{purchasesError}</p>
+          ) : purchases.length === 0 ? (
             <p className="text-sm text-slate-600 py-6 text-center">No purchases yet.</p>
           ) : (
             <ul className="divide-y divide-slate-100">
