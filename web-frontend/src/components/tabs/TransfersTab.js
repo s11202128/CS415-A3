@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import AccountCardsRow from "../account/AccountCardsRow";
 
 const TRANSFER_OPTIONS = [
   {
@@ -346,6 +347,9 @@ export default function TransfersTab({
 
   return (
     <section className="panel-grid">
+      <div className="mb-4">
+        <AccountCardsRow />
+      </div>
       <article className="panel wide">
         {/* Horizontal transfer type tab bar */}
         <nav className="acct-tab-bar">

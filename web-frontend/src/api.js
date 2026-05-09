@@ -102,6 +102,14 @@ export const api = {
   getProfile: (customerId) => request(`/profile/${encodeURIComponent(customerId)}`),
   updateProfile: (body) => request("/update-profile", { method: "PUT", body: JSON.stringify(body) }),
   getAccounts: () => request("/accounts"),
+  listMyAccounts: () => request("/accounts/mine"),
+  renameAccount: (id, nickname) =>
+    request(`/accounts/${id}/nickname`, {
+      method: "PATCH",
+      body: JSON.stringify({ nickname }),
+    }),
+  setDefaultAccount: (id) =>
+    request(`/accounts/${id}/default`, { method: "PATCH" }),
   createAccount: (body) => request("/accounts", { method: "POST", body: JSON.stringify(body) }),
   createAccountRequest: (body) => request("/accounts/request", { method: "POST", body: JSON.stringify(body) }),
   updateAccountAdmin: (id, body) => request(`/admin/accounts/${id}`, { method: "PATCH", body: JSON.stringify(body) }),

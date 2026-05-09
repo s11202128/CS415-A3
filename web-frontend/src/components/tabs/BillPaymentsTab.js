@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AccountCardsRow from "../account/AccountCardsRow";
 
 export default function BillPaymentsTab({
   accounts,
@@ -42,6 +43,9 @@ export default function BillPaymentsTab({
 
   return (
     <section className="panel-grid">
+      <div className="mb-4">
+        <AccountCardsRow />
+      </div>
       <article className="panel wide">
         <nav className="acct-tab-bar">
           <button type="button" className={`acct-tab-btn${activeBillTab === "pay" ? " active" : ""}`} onClick={() => setActiveBillTab("pay")}>Pay a Bill</button>

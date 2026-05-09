@@ -4,6 +4,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useAdminPoll } from "./hooks/useAdminPoll";
 import { filterDataByScope } from "./utils/dataFilters";
 import { tabs } from "./constants/tabs";
+import { AccountProvider } from "./context/AccountContext";
 import AuthPage from "./components/AuthPage";
 import BankBrand from "./components/BankBrand";
 import HomePage from "./components/HomePage";
@@ -794,6 +795,7 @@ export default function App() {
 
   return (
     <>
+      <AccountProvider enabled={Boolean(currentUser) && !isAdminUser}>
       <AppLayout
         activeTab={activeTab}
         businessSubTab={businessSubTab}
@@ -933,6 +935,7 @@ export default function App() {
       </AppLayout>
 
       <ChatWidget currentUser={currentUser} authToken={authToken} />
+      </AccountProvider>
     </>
   );
 }

@@ -73,6 +73,18 @@ const Account = sequelize.define('Account', {
     type: DataTypes.STRING,
     defaultValue: 'active',
   },
+  nickname: {
+    type: DataTypes.STRING(40),
+    allowNull: true,
+    validate: {
+      len: { args: [0, 40], msg: 'Nickname must be 40 characters or fewer' },
+    },
+  },
+  isDefault: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
 }, {
   tableName: 'accounts',
   timestamps: true,

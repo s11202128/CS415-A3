@@ -182,8 +182,29 @@ const toAccountResponse = (a) => ({
   maintenanceFee: a.accountType === "Simple Access" ? 2.5 : 0,
   currency: a.currency,
   status: a.status,
+  nickname: a.nickname || null,
+  isDefault: Boolean(a.isDefault),
   createdAt: a.createdAt,
 });
+
+// Ensure each customer has exactly one default account: if none of their
+// active accounts is flagged isDefault, mark the lowest-id active row.
+async function ensureCustomerHasDefault(customerId) {
+  if (!customerId) return;
+  const existing = await Account.findOne({
+    where: { customerId, isDefault: true },
+    attributes: ["id"],
+  });
+  if (existing) return;
+  const candidate = await Account.findOne({
+    where: { customerId, status: "active" },
+    order: [["id", "ASC"]],
+    attributes: ["id"],
+  });
+  if (candidate) {
+    await Account.update({ isDefault: true }, { where: { id: candidate.id } });
+  }
+}
 
 const toInvestmentResponse = (row) => ({
   id: row.id,
@@ -974,6 +995,8 @@ router.post("/accounts", requireAuth, requireAdmin, asyncHandler(async (req, res
     status: "active",
   });
 
+  await ensureCustomerHasDefault(customer.id);
+  await account.reload();
   res.status(201).json(toAccountResponse(account));
 }));
 
@@ -1049,6 +1072,8 @@ router.patch("/admin/accounts/:id/approve", asyncHandler(async (req, res) => {
     rejectionReason: null,
   });
 
+  await ensureCustomerHasDefault(account.customerId);
+  await account.reload();
   res.json(toAccountResponse(account));
 }));
 
@@ -1152,6 +1177,8 @@ router.post("/admin/create-account", asyncHandler(async (req, res) => {
     status: "active",
   });
 
+  await ensureCustomerHasDefault(customer.id);
+  await account.reload();
   res.status(201).json(toAccountResponse(account));
 }));
 

@@ -2,7 +2,8 @@
 
 const express = require("express");
 const AccountFactory = require("../models/business/AccountFactory");
-const { BusinessLayerAccount, Account } = require("../models");
+const { BusinessLayerAccount, Account, sequelize } = require("../models");
+const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -171,6 +172,94 @@ router.get("/:id/summary", async (req, res) => {
     if (!row) return;
     res.json(hydrate(row).toSummary());
   } catch (err) {
+    sendError(res, 500, err.message);
+  }
+});
+
+/* ─────────────────────────── Customer-scoped routes ───────────────────────────
+ * These are owned by the authenticated customer. Ownership is enforced by
+ * matching the row's customerId against req.auth.customerId. They operate on
+ * the canonical `accounts` table (Account model) — not BusinessLayerAccount.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+function serializeAccount(row) {
+  return {
+    id: row.id,
+    customerId: row.customerId,
+    accountNumber: row.accountNumber,
+    accountHolder: row.accountHolder,
+    accountType: row.accountType,
+    nickname: row.nickname || null,
+    isDefault: Boolean(row.isDefault),
+    balance: Number(row.balance || 0),
+    currency: row.currency || "FJD",
+    status: row.status || "active",
+  };
+}
+
+// GET /api/accounts/mine — list accounts owned by the authenticated customer.
+router.get("/mine", requireAuth, async (req, res) => {
+  try {
+    const customerId = req.auth?.customerId;
+    if (!customerId) return sendError(res, 401, "Authenticated customer required");
+    const rows = await Account.findAll({
+      where: { customerId },
+      order: [
+        ["isDefault", "DESC"],
+        ["id", "ASC"],
+      ],
+    });
+    res.json({ count: rows.length, items: rows.map(serializeAccount) });
+  } catch (err) {
+    sendError(res, 500, err.message);
+  }
+});
+
+// PATCH /api/accounts/:id/nickname — update nickname for an owned account.
+router.patch("/:id/nickname", requireAuth, async (req, res) => {
+  try {
+    const customerId = req.auth?.customerId;
+    if (!customerId) return sendError(res, 401, "Authenticated customer required");
+
+    const raw = typeof req.body?.nickname === "string" ? req.body.nickname : "";
+    const nickname = raw.trim().slice(0, 40);
+
+    const row = await Account.findOne({ where: { id: req.params.id, customerId } });
+    if (!row) return sendError(res, 404, "Account not found");
+
+    row.nickname = nickname || null;
+    await row.save();
+    res.json(serializeAccount(row));
+  } catch (err) {
+    sendError(res, 500, err.message);
+  }
+});
+
+// PATCH /api/accounts/:id/default — mark this account as default for the customer.
+router.patch("/:id/default", requireAuth, async (req, res) => {
+  const customerId = req.auth?.customerId;
+  if (!customerId) return sendError(res, 401, "Authenticated customer required");
+
+  const t = await sequelize.transaction();
+  try {
+    const row = await Account.findOne({
+      where: { id: req.params.id, customerId },
+      transaction: t,
+    });
+    if (!row) {
+      await t.rollback();
+      return sendError(res, 404, "Account not found");
+    }
+    await Account.update(
+      { isDefault: false },
+      { where: { customerId }, transaction: t },
+    );
+    row.isDefault = true;
+    await row.save({ transaction: t });
+    await t.commit();
+    res.json(serializeAccount(row));
+  } catch (err) {
+    await t.rollback();
     sendError(res, 500, err.message);
   }
 });

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { jsPDF } from "jspdf";
+import AccountCardsRow from "../account/AccountCardsRow";
 
 export default function StatementsTab({
   accounts = [],
@@ -216,6 +217,9 @@ export default function StatementsTab({
 
   return (
     <section className="panel-grid">
+      <div className="mb-4">
+        <AccountCardsRow />
+      </div>
       <article className="panel wide">
         <nav className="acct-tab-bar">
           {["Statement Preview", "E Documents"].map((s) => (
