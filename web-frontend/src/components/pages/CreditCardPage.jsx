@@ -15,7 +15,7 @@ const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractio
  * CreditCardPage — premium credit-card UI with 3D card visual, KPI tiles,
  * spending sparkline and recent purchases.
  */
-export default function CreditCardPage({ currentUser }) {
+export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
   const [hide, setHide] = useState(false);
 
   // Demo placeholder values — wire to real /creditcard endpoints from CreditCardPanel
@@ -90,7 +90,17 @@ export default function CreditCardPage({ currentUser }) {
 
       {/* Actions row */}
       <section className="grid sm:grid-cols-2 gap-4">
-        <button className="bof-card text-left group">
+        <button
+          type="button"
+          onClick={() => {
+            if (onPayNow) {
+              onPayNow();
+              return;
+            }
+            onSelectTab?.("Bill Payments");
+          }}
+          className="bof-card text-left group"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-navy-900">Pay Now</p>

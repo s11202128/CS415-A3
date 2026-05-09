@@ -79,6 +79,7 @@ export default function App() {
   const [transferForm, setTransferForm] = useState({ fromAccountId: "", toAccountNumber: "", amount: "", description: "" });
   const [transferMessage, setTransferMessage] = useState("");
   const [pendingTransfer, setPendingTransfer] = useState({ transferId: "", otp: "" });
+  const [transferStartOption, setTransferStartOption] = useState("");
 
   const [manualBillForm, setManualBillForm] = useState({ accountId: "", payee: "", amount: "" });
   const [scheduleBillForm, setScheduleBillForm] = useState({ accountId: "", payee: "", amount: "", scheduledDate: "" });
@@ -437,6 +438,10 @@ export default function App() {
     } catch (err) {
       setTransferMessage(err.message);
     }
+  }
+
+  function onStartCreditCardPayment() {
+    setActiveTab("Bill Payments");
   }
 
   async function onManualBill(e) {
@@ -850,6 +855,8 @@ export default function App() {
             onVerifyTransfer={onVerifyTransfer}
             transferMessage={transferMessage}
             setTransferMessage={setTransferMessage}
+            transferStartOption={transferStartOption}
+            clearTransferStartOption={() => setTransferStartOption("")}
           />
         )}
 
@@ -909,7 +916,11 @@ export default function App() {
         )}
 
         {!loading && currentUser && activeTab === "Business" && businessSubTab === "cards" && (
-          <CreditCardPage currentUser={currentUser} />
+          <CreditCardPage
+            currentUser={currentUser}
+            onSelectTab={setActiveTab}
+            onPayNow={onStartCreditCardPayment}
+          />
         )}
 
         {!loading && currentUser && activeTab === "Investments" && (
