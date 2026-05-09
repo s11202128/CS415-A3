@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import AdminOverviewTab from "./admin/AdminOverviewTab";
 import AdminCustomersTab from "./admin/AdminCustomersTab";
 import AdminAccountsTab from "./admin/AdminAccountsTab";
@@ -9,8 +9,22 @@ import AdminAccountLabTab from "./admin/AdminAccountLabTab";
 import AdminNetIncomeTab from "./admin/AdminNetIncomeTab";
 import AdminChatbotTab from "./admin/AdminChatbotTab";
 import ComplianceTab from "./tabs/ComplianceTab";
+import AdminLayout from "./layout/AdminLayout";
+import PageHeader from "./ui/PageHeader";
+import { ADMIN_NAV_ITEMS } from "./layout/adminNavItems";
 
-const ADMIN_SECTIONS = ["Overview", "Customers", "Accounts", "Deposits", "Loans", "Business", "Net Income", "Chatbot", "Monitoring", "Compliance"];
+const SECTION_META = {
+  Overview:     { eyebrow: "Operations",  description: "Live KPIs, deposits, and customer activity at a glance." },
+  Customers:    { eyebrow: "Directory",   description: "Search, edit, and manage every customer record." },
+  Accounts:     { eyebrow: "Accounts",    description: "Open, freeze, and update customer accounts." },
+  Deposits:     { eyebrow: "Cash Ops",    description: "Post manual deposits and review balance impacts." },
+  Loans:        { eyebrow: "Lending",     description: "Approve, reject, or update loan applications." },
+  Business:     { eyebrow: "Business",    description: "Tools for the business banking workspace." },
+  "Net Income": { eyebrow: "Finance",     description: "Year-over-year net income and revenue summary." },
+  Chatbot:      { eyebrow: "Support",     description: "Manage the AI assistant configuration and history." },
+  Monitoring:   { eyebrow: "Compliance",  description: "Transaction logs, transfer limits, and notification controls." },
+  Compliance:   { eyebrow: "Governance",  description: "Interest rates, year-end summaries, and policy controls." },
+};
 
 export default function AdminPage({
   customers,
@@ -53,114 +67,106 @@ export default function AdminPage({
   onGenerateSummaries,
   complianceMessage,
   authToken,
+  currentUser,
+  notificationsCount,
+  onLogout,
 }) {
   const [activeSection, setActiveSection] = useState("Overview");
+  const meta = SECTION_META[activeSection] || {};
+  const navItem = ADMIN_NAV_ITEMS.find((i) => i.id === activeSection);
+  const Icon = navItem?.icon;
 
   return (
-    <div className="admin-grid">
-      <section className="panel-grid">
-        <article className="panel wide">
-          <h2>Admin Dashboard</h2>
-        </article>
+    <AdminLayout
+      activeSection={activeSection}
+      onSelectSection={setActiveSection}
+      currentUser={currentUser}
+      notificationsCount={notificationsCount}
+      onLogout={onLogout}
+    >
+      <PageHeader
+        icon={Icon}
+        eyebrow={meta.eyebrow}
+        title={activeSection}
+        description={meta.description}
+      />
+
+      <section className="bof-card">
+        {activeSection === "Overview" && (
+          <AdminOverviewTab
+            customers={customers}
+            accounts={accounts}
+            adminReport={adminReport}
+            adminLastUpdated={adminLastUpdated}
+            adminMessage={adminMessage}
+          />
+        )}
+        {activeSection === "Customers" && (
+          <AdminCustomersTab
+            customers={customers}
+            accounts={accounts}
+            onAdminUpdateCustomer={onAdminUpdateCustomer}
+          />
+        )}
+        {activeSection === "Accounts" && (
+          <AdminAccountsTab
+            accounts={accounts}
+            adminAccountForm={adminAccountForm}
+            setAdminAccountForm={setAdminAccountForm}
+            onCreateAdminAccount={onCreateAdminAccount}
+            adminAccountMessage={adminAccountMessage}
+            onAdminUpdateAccount={onAdminUpdateAccount}
+            onAdminFreezeAccount={onAdminFreezeAccount}
+          />
+        )}
+        {activeSection === "Deposits" && (
+          <AdminDepositsTab
+            accounts={accounts}
+            adminDepositForm={adminDepositForm}
+            setAdminDepositForm={setAdminDepositForm}
+            onAdminDeposit={onAdminDeposit}
+            adminDepositMessage={adminDepositMessage}
+            setAdminDepositMessage={setAdminDepositMessage}
+          />
+        )}
+        {activeSection === "Loans" && (
+          <AdminLoansTab
+            loanApplications={loanApplications}
+            onAdminUpdateLoanStatus={onAdminUpdateLoanStatus}
+          />
+        )}
+        {activeSection === "Business" && <AdminAccountLabTab />}
+        {activeSection === "Net Income" && <AdminNetIncomeTab authToken={authToken} />}
+        {activeSection === "Chatbot" && <AdminChatbotTab authToken={authToken} />}
+        {activeSection === "Monitoring" && (
+          <AdminMonitoringTab
+            accounts={accounts}
+            transactions={transactions}
+            selectedAccountForTx={selectedAccountForTx}
+            setSelectedAccountForTx={setSelectedAccountForTx}
+            adminTransferLimit={adminTransferLimit}
+            setAdminTransferLimit={setAdminTransferLimit}
+            onAdminUpdateTransferLimit={onAdminUpdateTransferLimit}
+            onAdminReverseTransaction={onAdminReverseTransaction}
+            adminLoginLogs={adminLoginLogs}
+            adminNotificationLogs={adminNotificationLogs}
+            adminNotificationPreferences={adminNotificationPreferences}
+            onAdminToggleNotificationPreference={onAdminToggleNotificationPreference}
+          />
+        )}
+        {activeSection === "Compliance" && (
+          <ComplianceTab
+            interestRate={interestRate}
+            setInterestRate={setInterestRate}
+            onUpdateRate={onUpdateRate}
+            summaryYear={summaryYear}
+            setSummaryYear={setSummaryYear}
+            onGenerateSummaries={onGenerateSummaries}
+            summaries={summaries}
+            complianceMessage={complianceMessage}
+          />
+        )}
       </section>
-
-      <div className="workspace-layout">
-        <aside className="left-tabs">
-          <div className="admin-tabs" role="tablist" aria-label="Admin sections">
-            {ADMIN_SECTIONS.map((section) => (
-              <button
-                key={section}
-                type="button"
-                className={activeSection === section ? "admin-tab active" : "admin-tab"}
-                onClick={() => setActiveSection(section)}
-              >
-                {section}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <section className="tab-content">
-          {activeSection === "Overview" && (
-            <AdminOverviewTab
-              customers={customers}
-              accounts={accounts}
-              adminReport={adminReport}
-              adminLastUpdated={adminLastUpdated}
-              adminMessage={adminMessage}
-            />
-          )}
-          {activeSection === "Customers" && (
-            <AdminCustomersTab
-              customers={customers}
-              accounts={accounts}
-              onAdminUpdateCustomer={onAdminUpdateCustomer}
-            />
-          )}
-          {activeSection === "Accounts" && (
-            <AdminAccountsTab
-              accounts={accounts}
-              adminAccountForm={adminAccountForm}
-              setAdminAccountForm={setAdminAccountForm}
-              onCreateAdminAccount={onCreateAdminAccount}
-              adminAccountMessage={adminAccountMessage}
-              onAdminUpdateAccount={onAdminUpdateAccount}
-              onAdminFreezeAccount={onAdminFreezeAccount}
-            />
-          )}
-          {activeSection === "Deposits" && (
-            <AdminDepositsTab
-              accounts={accounts}
-              adminDepositForm={adminDepositForm}
-              setAdminDepositForm={setAdminDepositForm}
-              onAdminDeposit={onAdminDeposit}
-              adminDepositMessage={adminDepositMessage}
-              setAdminDepositMessage={setAdminDepositMessage}
-            />
-          )}
-          {activeSection === "Loans" && (
-            <AdminLoansTab loanApplications={loanApplications} onAdminUpdateLoanStatus={onAdminUpdateLoanStatus} />
-          )}
-          {activeSection === "Business" && (
-            <AdminAccountLabTab />
-          )}
-          {activeSection === "Net Income" && (
-            <AdminNetIncomeTab authToken={authToken} />
-          )}
-          {activeSection === "Chatbot" && (
-            <AdminChatbotTab authToken={authToken} />
-          )}
-          {activeSection === "Monitoring" && (
-            <AdminMonitoringTab
-              accounts={accounts}
-              transactions={transactions}
-              selectedAccountForTx={selectedAccountForTx}
-              setSelectedAccountForTx={setSelectedAccountForTx}
-              adminTransferLimit={adminTransferLimit}
-              setAdminTransferLimit={setAdminTransferLimit}
-              onAdminUpdateTransferLimit={onAdminUpdateTransferLimit}
-              onAdminReverseTransaction={onAdminReverseTransaction}
-              adminLoginLogs={adminLoginLogs}
-              adminNotificationLogs={adminNotificationLogs}
-              adminNotificationPreferences={adminNotificationPreferences}
-              onAdminToggleNotificationPreference={onAdminToggleNotificationPreference}
-            />
-          )}
-          {activeSection === "Compliance" && (
-            <ComplianceTab
-              interestRate={interestRate}
-              setInterestRate={setInterestRate}
-              onUpdateRate={onUpdateRate}
-              summaryYear={summaryYear}
-              setSummaryYear={setSummaryYear}
-              onGenerateSummaries={onGenerateSummaries}
-              summaries={summaries}
-              complianceMessage={complianceMessage}
-            />
-          )}
-        </section>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }
-

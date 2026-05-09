@@ -11,6 +11,7 @@ import {
   ArrowLeftRight,
   Receipt,
   CreditCard,
+  LogOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -31,13 +32,16 @@ function useClock() {
 }
 
 export default function TopHeader({
+  mode = "customer",
   currentUser,
   notificationsCount = 0,
   onOpenMobileNav,
   onQuickAction,
   isAdminUser,
   onOpenAdmin,
+  onLogout,
 }) {
+  const isAdminShell = mode === "admin";
   const [dark, setDark] = useState(false);
   const [showQuick, setShowQuick] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -50,10 +54,10 @@ export default function TopHeader({
   return (
     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/70">
       <div className="flex items-center gap-3 px-4 lg:px-6 h-16">
-        {/* Mobile menu */}
+        {/* Mobile menu (deprecated — TopNav replaces sidebar) */}
         <button
           type="button"
-          className="lg:hidden p-2 rounded-xl hover:bg-slate-100"
+          className="hidden"
           onClick={onOpenMobileNav}
           aria-label="Open menu"
         >
@@ -61,14 +65,21 @@ export default function TopHeader({
         </button>
 
         {/* Greeting (hidden on small) */}
-        <div className="hidden md:block min-w-0">
-          <p className="text-[11px] uppercase tracking-widest text-slate-600">
-            {now.toLocaleDateString("en-FJ", { weekday: "long", day: "numeric", month: "short" })} ·{" "}
-            {now.toLocaleTimeString("en-FJ", { hour: "2-digit", minute: "2-digit" })}
-          </p>
-          <p className="text-sm font-semibold text-navy-900 truncate">
-            {getGreeting()}, {firstName} <span className="ml-1">👋</span>
-          </p>
+        <div className="hidden md:flex items-center gap-3 min-w-0">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-widest text-slate-600">
+              {now.toLocaleDateString("en-FJ", { weekday: "long", day: "numeric", month: "short" })} ·{" "}
+              {now.toLocaleTimeString("en-FJ", { hour: "2-digit", minute: "2-digit" })}
+            </p>
+            <p className="text-sm font-semibold text-navy-900 truncate">
+              {getGreeting()}, {firstName} <span className="ml-1">👋</span>
+            </p>
+          </div>
+          {isAdminShell && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-navy-900 to-cyan-700 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-sm">
+              <ShieldCheck className="h-3 w-3" /> Admin Mode
+            </span>
+          )}
         </div>
 
         {/* Search */}
@@ -84,7 +95,8 @@ export default function TopHeader({
         </div>
 
         {/* Quick actions */}
-        <div className="relative hidden sm:block">
+        {!isAdminShell && (
+          <div className="relative hidden sm:block">
           <button
             type="button"
             className="bof-btn bof-btn-cyan px-3 py-2 text-xs"
@@ -117,6 +129,7 @@ export default function TopHeader({
             )}
           </AnimatePresence>
         </div>
+        )}
 
         {/* Theme toggle */}
         <button
@@ -175,7 +188,7 @@ export default function TopHeader({
                 >
                   Profile & Settings
                 </button>
-                {!isAdminUser && (
+                {!isAdminUser && !isAdminShell && (
                   <button
                     type="button"
                     onClick={() => { onOpenAdmin?.(); setShowProfile(false); }}
@@ -184,10 +197,29 @@ export default function TopHeader({
                     Admin Console
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => { setShowProfile(false); onLogout?.(); }}
+                  className="w-full text-left rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 mt-1 border-t border-slate-100 pt-2"
+                >
+                  <LogOut className="h-4 w-4" /> Sign out
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+
+        {/* Logout button (top-right) */}
+        <button
+          type="button"
+          onClick={onLogout}
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:border-rose-300 px-3 py-2 text-xs font-bold transition-colors"
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="hidden md:inline">Logout</span>
+        </button>
       </div>
     </header>
   );

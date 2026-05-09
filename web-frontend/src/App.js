@@ -15,7 +15,7 @@ import BillPaymentsTab from "./components/tabs/BillPaymentsTab";
 import StatementsTab from "./components/tabs/StatementsTab";
 import LoansTab from "./components/tabs/LoansTab";
 import ProfileTab from "./components/tabs/ProfileTab";
-import AdminLockScreen from "./components/tabs/AdminLockScreen";
+import AdminLockScreen from "./components/layout/AdminLockScreen";
 import AccountManager from "./components/AccountManager";
 import CreditCardPanel from "./components/CreditCardPanel";
 // New premium UI shell (Phase 1 + 2)
@@ -730,71 +730,64 @@ export default function App() {
 
   // ── Admin page view ───────────────────────────────────────────────────────
   if (isAdminUser) {
-    return (
-      <div className="app-shell">
-        <header className="hero">
-          <div className="hero-row">
-            <BankBrand
-              className="hero-brand"
-              compact
-              eyebrow="Administration"
-              title="Bank of Fiji"
-              subtitle="Admin dashboard with live monitoring and controls."
-            />
-            {currentUser && (
-              <div className="hero-user">
-                <span>Welcome, <strong>{currentUser.fullName}</strong></span>
-                <button className="logout-btn" onClick={onLogout}>Logout</button>
-              </div>
-            )}
-          </div>
-        </header>
-        <AdminPage
-          authToken={authToken}
-          customers={customers}
-          accounts={accounts}
-          transactions={adminTransactions}
-          scheduledBills={scheduledBills}
-          loanApplications={loanApplications}
-          summaries={summaries}
-          selectedAccountForTx={selectedAccountForTx}
-          setSelectedAccountForTx={setSelectedAccountForTx}
-          adminAccountForm={adminAccountForm}
-          setAdminAccountForm={setAdminAccountForm}
-          onCreateAdminAccount={onCreateAdminAccount}
-          adminAccountMessage={adminAccountMessage}
-          adminDepositForm={adminDepositForm}
-          setAdminDepositForm={setAdminDepositForm}
-          onAdminDeposit={onAdminDeposit}
-          adminDepositMessage={adminDepositMessage}
-          setAdminDepositMessage={setAdminDepositMessage}
-          adminMessage={adminMessage}
-          onAdminUpdateCustomer={onAdminUpdateCustomer}
-          onAdminUpdateAccount={onAdminUpdateAccount}
-          onAdminFreezeAccount={onAdminFreezeAccount}
-          onAdminUpdateLoanStatus={onAdminUpdateLoanStatus}
-          adminTransferLimit={adminTransferLimit}
-          setAdminTransferLimit={setAdminTransferLimit}
-          onAdminUpdateTransferLimit={onAdminUpdateTransferLimit}
-          onAdminReverseTransaction={onAdminReverseTransaction}
-          adminLoginLogs={adminLoginLogs}
-          adminNotificationLogs={adminNotificationLogs}
-          adminNotificationPreferences={adminNotificationPreferences}
-          onAdminToggleNotificationPreference={onAdminToggleNotificationPreference}
-          adminStatementRequests={adminStatementRequests}
-          onAdminUpdateStatementRequest={onAdminUpdateStatementRequest}
-          adminReport={adminReport}
-          adminLastUpdated={adminLastUpdated}
-          interestRate={interestRate}
-          setInterestRate={setInterestRate}
-          onUpdateRate={onUpdateRate}
-          summaryYear={summaryYear}
-          setSummaryYear={setSummaryYear}
-          onGenerateSummaries={onGenerateSummaries}
-          complianceMessage={complianceMessage}
+    if (showAdmin && !adminAccessGranted) {
+      return (
+        <AdminLockScreen
+          adminAuthForm={adminAuthForm}
+          setAdminAuthForm={setAdminAuthForm}
+          onVerifyAdminAccess={onVerifyAdminAccess}
+          adminAuthMessage={adminAuthMessage}
         />
-        <SiteFooter currentYear={currentYear} />
-      </div>
+      );
+    }
+    return (
+      <AdminPage
+        authToken={authToken}
+        currentUser={currentUser}
+        notificationsCount={notifications?.length || 0}
+        onLogout={onLogout}
+        customers={customers}
+        accounts={accounts}
+        transactions={adminTransactions}
+        scheduledBills={scheduledBills}
+        loanApplications={loanApplications}
+        summaries={summaries}
+        selectedAccountForTx={selectedAccountForTx}
+        setSelectedAccountForTx={setSelectedAccountForTx}
+        adminAccountForm={adminAccountForm}
+        setAdminAccountForm={setAdminAccountForm}
+        onCreateAdminAccount={onCreateAdminAccount}
+        adminAccountMessage={adminAccountMessage}
+        adminDepositForm={adminDepositForm}
+        setAdminDepositForm={setAdminDepositForm}
+        onAdminDeposit={onAdminDeposit}
+        adminDepositMessage={adminDepositMessage}
+        setAdminDepositMessage={setAdminDepositMessage}
+        adminMessage={adminMessage}
+        onAdminUpdateCustomer={onAdminUpdateCustomer}
+        onAdminUpdateAccount={onAdminUpdateAccount}
+        onAdminFreezeAccount={onAdminFreezeAccount}
+        onAdminUpdateLoanStatus={onAdminUpdateLoanStatus}
+        adminTransferLimit={adminTransferLimit}
+        setAdminTransferLimit={setAdminTransferLimit}
+        onAdminUpdateTransferLimit={onAdminUpdateTransferLimit}
+        onAdminReverseTransaction={onAdminReverseTransaction}
+        adminLoginLogs={adminLoginLogs}
+        adminNotificationLogs={adminNotificationLogs}
+        adminNotificationPreferences={adminNotificationPreferences}
+        onAdminToggleNotificationPreference={onAdminToggleNotificationPreference}
+        adminStatementRequests={adminStatementRequests}
+        onAdminUpdateStatementRequest={onAdminUpdateStatementRequest}
+        adminReport={adminReport}
+        adminLastUpdated={adminLastUpdated}
+        interestRate={interestRate}
+        setInterestRate={setInterestRate}
+        onUpdateRate={onUpdateRate}
+        summaryYear={summaryYear}
+        setSummaryYear={setSummaryYear}
+        onGenerateSummaries={onGenerateSummaries}
+        complianceMessage={complianceMessage}
+      />
     );
   }
   // ─────────────────────────────────────────────────────────────────────────
@@ -803,6 +796,7 @@ export default function App() {
     <>
       <AppLayout
         activeTab={activeTab}
+        businessSubTab={businessSubTab}
         onSelectTab={setActiveTab}
         onSelectBusinessSub={setBusinessSubTab}
         currentUser={currentUser}

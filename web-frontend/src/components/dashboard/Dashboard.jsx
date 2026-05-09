@@ -109,7 +109,7 @@ export default function Dashboard({
           <div>
             <p className="text-xs uppercase tracking-widest text-cyan-200/90">Total balance · FJD</p>
             <div className="mt-2 flex items-end gap-3">
-              <h1 className="text-4xl lg:text-5xl font-display font-bold tracking-tight">
+              <h1 className="text-4xl lg:text-5xl font-display font-bold tracking-tight !text-white">
                 {hideBalance ? "•••••••" : FJD(totalBalance)}
               </h1>
               <button

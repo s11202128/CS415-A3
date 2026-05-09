@@ -6,6 +6,76 @@ import {
 } from "lucide-react";
 import { api, setToken } from "../api";
 
+// ----- field helpers (module scope so inputs don't remount per keystroke) -----
+const inputBase =
+  "w-full rounded-xl border bg-white pl-10 pr-3 py-2.5 text-sm text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 transition-colors";
+
+function Field({ icon: Icon, label, hint, children }) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-semibold text-slate-700 mb-1.5">
+        {label}{hint && <span className="text-slate-400 font-normal"> · {hint}</span>}
+      </span>
+      <div className="relative">
+        {Icon && <Icon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />}
+        {children}
+      </div>
+    </label>
+  );
+}
+
+function TextField({ icon, label, hint, ...rest }) {
+  return (
+    <Field icon={icon} label={label} hint={hint}>
+      <input {...rest} className={`${inputBase} border-slate-200`} />
+    </Field>
+  );
+}
+
+function PasswordField({
+  id, label, value, onChange, autoComplete, required = true, minLength,
+  error, hint, showPw, togglePw,
+}) {
+  const visible = !!(showPw && showPw[id]);
+  return (
+    <label className="block">
+      <span className="block text-xs font-semibold text-slate-700 mb-1.5">
+        {label}{hint && <span className="text-slate-400 font-normal"> · {hint}</span>}
+      </span>
+      <div className="relative">
+        <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <input
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          required={required}
+          minLength={minLength}
+          autoComplete={autoComplete}
+          className={`${inputBase} pr-11 ${error ? "border-rose-300" : "border-slate-200"}`}
+        />
+        <button type="button" onClick={() => togglePw && togglePw(id)}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 grid place-items-center h-7 w-7 rounded-md text-slate-500 hover:text-navy-900 hover:bg-slate-100"
+          aria-label={visible ? "Hide password" : "Show password"}>
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+      {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
+    </label>
+  );
+}
+
+function SubmitButton({ children, submitting }) {
+  return (
+    <button type="submit" disabled={submitting}
+      className="group relative w-full rounded-xl bg-gradient-to-r from-navy-900 to-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:shadow-card-hover transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+      <span className="inline-flex items-center justify-center gap-2">
+        {submitting ? "Please wait…" : children}
+        {!submitting && <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />}
+      </span>
+    </button>
+  );
+}
+
 /**
  * Premium AuthPage — split-screen sign-in/up/forgot/reset experience.
  * Functionality (api.login / api.register / requestPasswordReset / resetPassword)
@@ -111,66 +181,6 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
     reset: "Use the code we sent to set a new password.",
   };
 
-  // ----- field helpers (closures over state) -----
-  const inputBase =
-    "w-full rounded-xl border bg-white pl-10 pr-3 py-2.5 text-sm text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 transition-colors";
-
-  const Field = ({ icon: Icon, label, hint, children }) => (
-    <label className="block">
-      <span className="block text-xs font-semibold text-slate-700 mb-1.5">
-        {label}{hint && <span className="text-slate-400 font-normal"> · {hint}</span>}
-      </span>
-      <div className="relative">
-        {Icon && <Icon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />}
-        {children}
-      </div>
-    </label>
-  );
-
-  const TextField = ({ icon, label, hint, ...rest }) => (
-    <Field icon={icon} label={label} hint={hint}>
-      <input {...rest} className={`${inputBase} border-slate-200`} />
-    </Field>
-  );
-
-  const PasswordField = ({ id, label, value, onChange, autoComplete, required = true, minLength, error, hint }) => (
-    <label className="block">
-      <span className="block text-xs font-semibold text-slate-700 mb-1.5">
-        {label}{hint && <span className="text-slate-400 font-normal"> · {hint}</span>}
-      </span>
-      {/* Input + icons live in their own fixed-height relative wrapper so the
-          eye toggle stays anchored even when an error message appears below. */}
-      <div className="relative">
-        <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <input
-          type={showPw[id] ? "text" : "password"}
-          value={value}
-          onChange={onChange}
-          required={required}
-          minLength={minLength}
-          autoComplete={autoComplete}
-          className={`${inputBase} pr-11 ${error ? "border-rose-300" : "border-slate-200"}`}
-        />
-        <button type="button" onClick={() => togglePw(id)}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 grid place-items-center h-7 w-7 rounded-md text-slate-500 hover:text-navy-900 hover:bg-slate-100"
-          aria-label={showPw[id] ? "Hide password" : "Show password"}>
-          {showPw[id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-      {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
-    </label>
-  );
-
-  const SubmitButton = ({ children }) => (
-    <button type="submit" disabled={submitting}
-      className="group relative w-full rounded-xl bg-gradient-to-r from-navy-900 to-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:shadow-card-hover transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-      <span className="inline-flex items-center justify-center gap-2">
-        {submitting ? "Please wait…" : children}
-        {!submitting && <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />}
-      </span>
-    </button>
-  );
-
   function renderLogin() {
     return (
       <form onSubmit={onLogin} className="space-y-4">
@@ -179,6 +189,7 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
           value={authForm.email}
           onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })} />
         <PasswordField id="loginPw" label="Password" autoComplete="current-password"
+          showPw={showPw} togglePw={togglePw}
           value={authForm.password}
           error={loginPasswordError}
           onChange={(e) => {
@@ -195,7 +206,7 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
             className="font-bold text-navy-900 underline decoration-cyan-500 decoration-2 underline-offset-4 hover:decoration-cyan-600">Forgot password?</button>
         </div>
 
-        <SubmitButton>Sign in securely</SubmitButton>
+        <SubmitButton submitting={submitting}>Sign in securely</SubmitButton>
 
         <div className="pt-4 border-t border-slate-200 text-center text-sm">
           <p className="text-slate-700 mb-3">New to Bank of Fiji?</p>
@@ -224,14 +235,16 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
           value={authForm.email}
           onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })} />
         <PasswordField id="regPw" label="Password" autoComplete="new-password" minLength={8}
+          showPw={showPw} togglePw={togglePw}
           hint="min 8 characters"
           value={authForm.password}
           onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })} />
         <PasswordField id="regConfirm" label="Confirm password" autoComplete="new-password"
+          showPw={showPw} togglePw={togglePw}
           value={authForm.confirmPassword}
           onChange={(e) => setAuthForm({ ...authForm, confirmPassword: e.target.value })} />
 
-        <SubmitButton>Create account</SubmitButton>
+        <SubmitButton submitting={submitting}>Create account</SubmitButton>
 
         <p className="text-[11px] text-slate-600 text-center">
           By creating an account you agree to our <span className="text-navy-900 font-semibold">Terms</span> &{" "}
@@ -254,7 +267,7 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
           placeholder="you@example.com"
           value={resetForm.email}
           onChange={(e) => setResetForm({ ...resetForm, email: e.target.value })} />
-        <SubmitButton>Send reset code</SubmitButton>
+        <SubmitButton submitting={submitting}>Send reset code</SubmitButton>
         <div className="pt-4 border-t border-slate-200 text-center text-sm">
           <button type="button" onClick={() => onAuthViewChange("login")}
             className="font-bold text-navy-900 underline decoration-cyan-500 decoration-2 underline-offset-4 hover:decoration-cyan-600">Back to sign in</button>
@@ -276,12 +289,14 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
           value={resetForm.code}
           onChange={(e) => setResetForm({ ...resetForm, code: e.target.value })} />
         <PasswordField id="resetNewPw" label="New password"
+          showPw={showPw} togglePw={togglePw}
           value={resetForm.newPassword}
           onChange={(e) => setResetForm({ ...resetForm, newPassword: e.target.value })} />
         <PasswordField id="resetConfirm" label="Confirm new password"
+          showPw={showPw} togglePw={togglePw}
           value={resetForm.confirmPassword}
           onChange={(e) => setResetForm({ ...resetForm, confirmPassword: e.target.value })} />
-        <SubmitButton>Reset password</SubmitButton>
+        <SubmitButton submitting={submitting}>Reset password</SubmitButton>
         <div className="pt-4 border-t border-slate-200 text-center text-sm">
           <button type="button" onClick={() => onAuthViewChange("login")}
             className="font-bold text-navy-900 underline decoration-cyan-500 decoration-2 underline-offset-4 hover:decoration-cyan-600">Back to sign in</button>

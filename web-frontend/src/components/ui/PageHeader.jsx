@@ -24,7 +24,7 @@ export default function PageHeader({ icon: Icon, eyebrow, title, description, ac
             {eyebrow && (
               <p className="text-[11px] uppercase tracking-widest text-cyan-200/90 font-semibold">{eyebrow}</p>
             )}
-            <h1 className="text-2xl lg:text-3xl font-display font-bold tracking-tight">{title}</h1>
+            <h1 className="text-2xl lg:text-3xl font-display font-bold tracking-tight !text-white">{title}</h1>
             {description && <p className="mt-1 text-sm text-cyan-50/80 max-w-2xl">{description}</p>}
           </div>
         </div>

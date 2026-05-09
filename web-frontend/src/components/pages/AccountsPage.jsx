@@ -45,7 +45,9 @@ export default function AccountsPage(props) {
 
       {mine.length > 0 && (
         <section>
-          <h2 className="text-lg font-bold text-navy-900 mb-3">Your Cards</h2>
+          <h2 className="inline-block text-base font-display font-bold text-white mb-3 px-4 py-2 rounded-xl shadow-sm bg-gradient-to-br from-navy-900 via-navy-800 to-cyan-700">
+            Your Cards
+          </h2>
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {mine.map((acc, i) => (
               <motion.div
