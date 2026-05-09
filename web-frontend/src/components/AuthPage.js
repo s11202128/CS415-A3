@@ -2,13 +2,13 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck, Lock, Mail, Phone, User as UserIcon, Eye, EyeOff,
-  ArrowRight, KeyRound, Sparkles, CheckCircle2, AlertCircle, Globe2,
+  ArrowRight, KeyRound, Sparkles, CheckCircle2, AlertCircle, Globe2, Check,
 } from "lucide-react";
 import { api, setToken } from "../api";
 
 // ----- field helpers (module scope so inputs don't remount per keystroke) -----
 const inputBase =
-  "w-full rounded-xl border bg-white pl-10 pr-3 py-2.5 text-sm text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 transition-colors";
+  "w-full rounded-xl border bg-white pl-10 pr-3 py-2.5 text-sm text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500";
 
 function Field({ icon: Icon, label, hint, children }) {
   return (
@@ -54,7 +54,7 @@ function PasswordField({
           className={`${inputBase} pr-11 ${error ? "border-rose-300" : "border-slate-200"}`}
         />
         <button type="button" onClick={() => togglePw && togglePw(id)}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 grid place-items-center h-7 w-7 rounded-md text-slate-500 hover:text-navy-900 hover:bg-slate-100"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 focus:outline-none"
           aria-label={visible ? "Hide password" : "Show password"}>
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -94,6 +94,7 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
   const [showPw, setShowPw] = useState({});
   const [loginPasswordError, setLoginPasswordError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const togglePw = (k) => setShowPw((p) => ({ ...p, [k]: !p[k] }));
 
@@ -198,8 +199,24 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
           }} />
 
         <div className="flex items-center justify-between text-xs">
-          <label className="inline-flex items-center gap-2 text-slate-600 cursor-pointer">
-            <input type="checkbox" className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
+          <label className="inline-flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+            <span
+              role="checkbox"
+              aria-checked={rememberMe}
+              tabIndex={0}
+              onClick={() => setRememberMe((v) => !v)}
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") {
+                  e.preventDefault();
+                  setRememberMe((v) => !v);
+                }
+              }}
+              className={`grid place-items-center h-4 w-4 rounded border ${
+                rememberMe ? "bg-slate-700 border-slate-700" : "bg-white border-slate-300"
+              }`}
+            >
+              {rememberMe && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+            </span>
             Remember me
           </label>
           <button type="button" onClick={() => onAuthViewChange("forgot")}
