@@ -16,7 +16,31 @@
     // multi-project root file exporting an array of project paths.)
 
     // ---------- Java / Gradle (vscjava.vscode-java-pack + vscjava.vscode-gradle) ----------
+    // NOTE: The Java Test Runner does not officially support Android Gradle projects
+    // (the Android Gradle Plugin does not expose its source sets via the tooling API
+    // that redhat.java consumes). These settings enable best-effort import so JUnit
+    // tests under mobile-android/app/src/test/ may appear in the Testing sidebar.
+    // Use the existing "Test: Android Unit (JUnit 4)" task as the reliable fallback.
+    "java.import.gradle.enabled": true,
+    "java.import.gradle.wrapper.enabled": true,
+    "java.project.importOnFirstTimeStartup": "automatic",
+    "java.configuration.detectJdksAtStart": true,
+    "java.import.gradle.home": "",
+    "java.import.exclusions": [
+        "**/node_modules/**",
+        "**/.metadata/**",
+        "**/archetype-resources/**",
+        "**/META-INF/maven/**",
+        "/**/build/**"
+    ],
     "java.test.config": {
         "workingDirectory": "${workspaceFolder}/mobile-android"
+    },
+    "gradle.nestedProjects": true,
+    "gradle.javaDebug": {
+        "tasks": [
+            "test",
+            "testDebugUnitTest"
+        ]
     }
 }

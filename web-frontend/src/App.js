@@ -23,6 +23,7 @@ import ChatWidget from "./components/chatbot/ChatWidget";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Overview");
+  const [businessSubTab, setBusinessSubTab] = useState("accounts");
   const [showAdmin, setShowAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -929,14 +930,55 @@ export default function App() {
 
           {!loading && currentUser && activeTab === "Business" && (
             <section className="account-lab" style={{ display: "grid", gap: 16 }}>
-              <h2>Business</h2>
-              <p style={{ color: "#555", marginTop: -8 }}>
-                Try out the new account-type business layer (Access / Savings / Business)
-                and the optional standalone Credit Card product. These are kept
-                separate from your existing bank accounts.
-              </p>
-              <AccountManager />
-              <CreditCardPanel />
+              <header>
+                <h2>Business</h2>
+                <p style={{ color: "#555", marginTop: -4 }}>
+                  Manage the new account-type business layer (Access / Savings / Business)
+                  and the optional standalone Credit Card product. Switch between the two
+                  using the tabs below.
+                </p>
+                <div
+                  role="tablist"
+                  aria-label="Business sub-sections"
+                  style={{
+                    display: "inline-flex",
+                    gap: 6,
+                    marginTop: 12,
+                    padding: 4,
+                    border: "1px solid #d8dee9",
+                    borderRadius: 999,
+                    background: "#f5f7fb",
+                  }}
+                >
+                  {[
+                    { id: "accounts", label: "Business Accounts" },
+                    { id: "cards", label: "Credit Cards" },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={businessSubTab === t.id}
+                      onClick={() => setBusinessSubTab(t.id)}
+                      style={{
+                        padding: "6px 16px",
+                        borderRadius: 999,
+                        border: "none",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                        background: businessSubTab === t.id ? "#0a1733" : "transparent",
+                        color: businessSubTab === t.id ? "#fff" : "#1f2a44",
+                        transition: "background 0.15s ease",
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </header>
+
+              {businessSubTab === "accounts" && <AccountManager />}
+              {businessSubTab === "cards" && <CreditCardPanel />}
             </section>
           )}
 
