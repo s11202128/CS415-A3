@@ -230,6 +230,34 @@ function parseScheduledAccountId(description) {
   return match ? Number(match[1]) : null;
 }
 
+const BILL_RECURRENCE_VALUES = new Set(["once", "weekly", "fortnightly", "monthly"]);
+
+function normalizeBillRecurrence(value) {
+  const normalized = String(value || "once").trim().toLowerCase();
+  return BILL_RECURRENCE_VALUES.has(normalized) ? normalized : "once";
+}
+
+function nextBillDueDate(currentDate, recurrence) {
+  const base = currentDate ? new Date(currentDate) : new Date();
+  if (Number.isNaN(base.getTime())) {
+    return null;
+  }
+  const r = normalizeBillRecurrence(recurrence);
+  if (r === "weekly") {
+    base.setDate(base.getDate() + 7);
+    return base;
+  }
+  if (r === "fortnightly") {
+    base.setDate(base.getDate() + 14);
+    return base;
+  }
+  if (r === "monthly") {
+    base.setMonth(base.getMonth() + 1);
+    return base;
+  }
+  return null;
+}
+
 // Get customer by ID
 async function getCustomer(customerId) {
   return await Customer.findByPk(customerId);
@@ -657,11 +685,13 @@ async function postBillPayment({ accountId, payee, amount, mode, scheduledDate }
 }
 
 // Schedule a bill payment
-async function scheduleBillPayment({ accountId, payee, amount, scheduledDate }) {
+async function scheduleBillPayment({ accountId, payee, amount, scheduledDate, recurrence = "once" }) {
   const account = await getAccount(accountId);
   if (!account) {
     throw new Error("Account not found");
   }
+
+  const normalizedRecurrence = normalizeBillRecurrence(recurrence);
 
   const bill = await Bill.create({
     customerId: account.customerId,
@@ -669,6 +699,7 @@ async function scheduleBillPayment({ accountId, payee, amount, scheduledDate }) 
     amount,
     status: "scheduled",
     dueDate: new Date(scheduledDate),
+    recurrence: normalizedRecurrence,
     description: `scheduled_account:${accountId}`,
   });
 
@@ -678,6 +709,7 @@ async function scheduleBillPayment({ accountId, payee, amount, scheduledDate }) 
     payee,
     amount,
     scheduledDate,
+    recurrence: normalizedRecurrence,
     status: "scheduled",
     createdAt: bill.createdAt,
   };
@@ -718,7 +750,36 @@ async function runScheduledPayment(id) {
   });
 
   await scheduled.update({ status: "paid" });
-  return { scheduled, payment };
+
+  const recurrence = normalizeBillRecurrence(scheduled.recurrence);
+  let nextScheduled = null;
+  if (recurrence !== "once") {
+    const nextDueDate = nextBillDueDate(scheduled.dueDate, recurrence);
+    if (!nextDueDate) {
+      throw new Error("Unable to determine next recurring due date");
+    }
+    const nextRow = await Bill.create({
+      customerId: scheduled.customerId,
+      billType: scheduled.billType,
+      amount: scheduled.amount,
+      status: "scheduled",
+      dueDate: nextDueDate,
+      recurrence,
+      description: `scheduled_account:${account.id}`,
+    });
+    nextScheduled = {
+      id: nextRow.id,
+      accountId: account.id,
+      payee: nextRow.billType,
+      amount: Number(nextRow.amount),
+      scheduledDate: nextRow.dueDate,
+      recurrence,
+      status: nextRow.status,
+      createdAt: nextRow.createdAt,
+    };
+  }
+
+  return { scheduled, payment, nextScheduled };
 }
 
 // Generate statement for an account

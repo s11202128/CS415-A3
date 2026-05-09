@@ -1615,6 +1615,7 @@ router.post("/bills/scheduled", requireAuth, asyncHandler(async (req, res) => {
     payee: payload.payee,
     amount: Number(payload.amount),
     scheduledDate: payload.scheduledDate,
+    recurrence: payload.frequency || payload.recurrence || "once",
   });
   res.status(201).json({ ...row, accountNumber: account.accountNumber });
 }));
@@ -1630,6 +1631,7 @@ router.post("/schedule-payment", requireAuth, asyncHandler(async (req, res) => {
     payee: payload.payee,
     amount: Number(payload.amount),
     scheduledDate: payload.scheduledDate,
+    recurrence: payload.frequency || payload.recurrence || "once",
   });
   res.status(201).json({ ...row, accountNumber: account.accountNumber });
 }));
@@ -1647,6 +1649,7 @@ router.get("/bills/scheduled", requireAuth, asyncHandler(async (req, res) => {
       payee: b.billType,
       amount: Number(b.amount),
       scheduledDate: b.dueDate,
+      recurrence: b.recurrence || "once",
       status: "scheduled",
       createdAt: b.createdAt,
     }))
@@ -1667,6 +1670,7 @@ router.get("/bills/history", requireAuth, asyncHandler(async (req, res) => {
       payee: b.billType,
       amount: Number(b.amount),
       scheduledDate: b.dueDate,
+      recurrence: b.recurrence || "once",
       status: b.status,
       createdAt: b.createdAt,
       description: b.description,
