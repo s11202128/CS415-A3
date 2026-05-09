@@ -96,6 +96,8 @@ export default function AdminPage({
           <AdminOverviewTab
             customers={customers}
             accounts={accounts}
+            transactions={transactions}
+            loanApplications={loanApplications}
             adminReport={adminReport}
             adminLastUpdated={adminLastUpdated}
             adminMessage={adminMessage}
