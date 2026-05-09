@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import {
   CalendarClock,
   CheckCircle2,
@@ -65,15 +65,33 @@ export default function BillPaymentsTab({
 
   const [activeBillTab, setActiveBillTab] = useState("pay");
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [creditCardDropdownOpen, setCreditCardDropdownOpen] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
   const [historyStatus, setHistoryStatus] = useState("all");
   const [historyDateFrom, setHistoryDateFrom] = useState("");
   const [historyDateTo, setHistoryDateTo] = useState("");
+  const creditCardDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (creditCardDropdownRef.current && !creditCardDropdownRef.current.contains(event.target)) {
+        setCreditCardDropdownOpen(false);
+      }
+    }
+
+    if (creditCardDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [creditCardDropdownOpen]);
+
   const hasAccounts = (accounts || []).length > 0;
   const recurrence = String(scheduleBillForm.frequency || "once").toLowerCase();
-
+  const isCreditCardMode = manualBillForm.paymentMethod === "credit_card";
   const hasSharedBillDetails = Boolean(
-    manualBillForm.accountId && manualBillForm.payee && manualBillForm.amount,
+    manualBillForm.payee &&
+      manualBillForm.amount &&
+      (isCreditCardMode ? manualBillForm.paymentSourceId : manualBillForm.accountId),
   );
 
   const historyRows = Array.isArray(billHistory) ? billHistory : [];
@@ -299,14 +317,17 @@ export default function BillPaymentsTab({
                         : "bg-white text-navy-900 border border-slate-200 hover:bg-slate-50"
                     }`}
                     onClick={() => {
+                      const defaultAccountId = String(manualBillForm.accountId || accounts?.[0]?.id || "");
                       setManualBillForm({
                         ...manualBillForm,
                         paymentMethod: "credit_card",
+                        accountId: defaultAccountId,
                         paymentSourceId: "",
                       });
                       setScheduleBillForm({
                         ...scheduleBillForm,
                         paymentMethod: "credit_card",
+                        accountId: String(scheduleBillForm.accountId || defaultAccountId),
                         paymentSourceId: "",
                       });
                     }}
@@ -345,31 +366,79 @@ export default function BillPaymentsTab({
                     </select>
                   </label>
                 ) : (
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Credit Card
-                    <select
-                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-navy-900"
-                      value={manualBillForm.paymentSourceId || ""}
-                      onChange={(e) => {
-                        setManualBillForm({
-                          ...manualBillForm,
-                          paymentSourceId: e.target.value,
-                        });
-                        setScheduleBillForm({
-                          ...scheduleBillForm,
-                          paymentSourceId: e.target.value,
-                        });
-                      }}
-                      required
-                    >
-                      <option value="">Select credit card</option>
-                      {(creditCards || []).map((card) => (
-                        <option key={card.cardNumber} value={card.cardNumber}>
-                          {card.cardNumber} (Available: {FJD(card.availableCredit || 0)})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">
+                      Credit Card
+                    </div>
+                    
+                    <div className="relative" ref={creditCardDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setCreditCardDropdownOpen(!creditCardDropdownOpen)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-left text-navy-900 flex justify-between items-center hover:bg-slate-50 transition"
+                      >
+                        <span>
+                          {manualBillForm.paymentSourceId
+                            ? (creditCards || []).find((c) => c.cardNumber === manualBillForm.paymentSourceId)?.cardNumber || "Select credit card"
+                            : "Select credit card"}
+                        </span>
+                        <span className="text-xs">▼</span>
+                      </button>
+
+                      {creditCardDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-2 rounded-xl border border-slate-200 bg-white shadow-lg">
+                          {(creditCards || []).length === 0 ? (
+                            <div className="px-4 py-3 text-sm text-slate-600">No credit cards available</div>
+                          ) : (
+                            (creditCards || []).map((card, idx) => (
+                              <button
+                                key={card.cardNumber}
+                                type="button"
+                                onClick={() => {
+                                  setManualBillForm({
+                                    ...manualBillForm,
+                                    paymentSourceId: card.cardNumber,
+                                  });
+                                  setScheduleBillForm({
+                                    ...scheduleBillForm,
+                                    paymentSourceId: card.cardNumber,
+                                  });
+                                  setCreditCardDropdownOpen(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left border-b last:border-b-0 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-teal-50 transition ${
+                                  manualBillForm.paymentSourceId === card.cardNumber ? "bg-cyan-50" : ""
+                                }`}
+                              >
+                                <div className="grid gap-2">
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-mono font-semibold text-navy-900">{card.cardNumber}</span>
+                                    {card.frozen && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">🔒 FROZEN</span>}
+                                    {manualBillForm.paymentSourceId === card.cardNumber && (
+                                      <span className="text-cyan-600 font-bold">✓</span>
+                                    )}
+                                  </div>
+                                  <div className="grid gap-1 text-xs text-slate-600">
+                                    <div className="flex justify-between">
+                                      <span>Limit:</span>
+                                      <span className="font-semibold text-slate-900">{FJD(card.creditLimit || 0)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Balance:</span>
+                                      <span className="font-semibold text-red-600">{FJD(card.currentBalance || 0)}</span>
+                                    </div>
+                                    <div className="flex justify-between border-t border-slate-200 pt-1">
+                                      <span className="font-semibold">Available:</span>
+                                      <span className="font-bold text-cyan-600">{FJD(card.availableCredit || 0)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
 
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">

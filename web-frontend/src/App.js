@@ -452,7 +452,14 @@ export default function App() {
     e.preventDefault();
     setBillMessage("");
     try {
-      await api.payBillManual({ ...manualBillForm, amount: Number(manualBillForm.amount) });
+      const fallbackAccountId = String(manualBillForm.accountId || accounts?.[0]?.id || "");
+      await api.payBillManual({
+        ...manualBillForm,
+        accountId: fallbackAccountId,
+        paymentMethod: manualBillForm.paymentMethod || "account",
+        paymentSourceId: manualBillForm.paymentSourceId || "",
+        amount: Number(manualBillForm.amount),
+      });
       setBillMessage("Manual bill payment processed.");
       await loadInitialData();
     } catch (err) {
@@ -464,7 +471,14 @@ export default function App() {
     e.preventDefault();
     setBillMessage("");
     try {
-      await api.scheduleBill({ ...scheduleBillForm, amount: Number(scheduleBillForm.amount) });
+      const fallbackAccountId = String(scheduleBillForm.accountId || accounts?.[0]?.id || "");
+      await api.scheduleBill({
+        ...scheduleBillForm,
+        accountId: fallbackAccountId,
+        paymentMethod: scheduleBillForm.paymentMethod || "account",
+        paymentSourceId: scheduleBillForm.paymentSourceId || "",
+        amount: Number(scheduleBillForm.amount),
+      });
       setBillMessage("Scheduled bill payment created.");
       await loadInitialData();
     } catch (err) {

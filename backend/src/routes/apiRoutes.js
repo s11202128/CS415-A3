@@ -1563,13 +1563,20 @@ router.post("/bills/manual", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const payment = await postBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     mode: "manual",
-    paymentMethod: payload.paymentMethod || "account",
-    paymentSourceId: payload.paymentSourceId || String(account.id),
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1580,14 +1587,21 @@ router.post("/bill-payment", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const payment = await postBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     mode: payload.mode || "manual",
     scheduledDate: payload.scheduledDate || null,
-    paymentMethod: payload.paymentMethod || "account",
-    paymentSourceId: payload.paymentSourceId || String(account.id),
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1598,14 +1612,21 @@ router.post("/pay-bill", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const payment = await postBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     mode: payload.mode || "manual",
     scheduledDate: payload.scheduledDate || null,
-    paymentMethod: payload.paymentMethod || "account",
-    paymentSourceId: payload.paymentSourceId || String(account.id),
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1616,14 +1637,21 @@ router.post("/bills/scheduled", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const row = await scheduleBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     scheduledDate: payload.scheduledDate,
     recurrence: payload.frequency || payload.recurrence || "once",
-    paymentMethod: payload.paymentMethod || "account",
-    paymentSourceId: payload.paymentSourceId || String(account.id),
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...row, accountNumber: account.accountNumber });
 }));
@@ -1634,14 +1662,21 @@ router.post("/schedule-payment", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const row = await scheduleBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     scheduledDate: payload.scheduledDate,
     recurrence: payload.frequency || payload.recurrence || "once",
-    paymentMethod: payload.paymentMethod || "account",
-    paymentSourceId: payload.paymentSourceId || String(account.id),
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...row, accountNumber: account.accountNumber });
 }));

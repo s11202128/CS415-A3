@@ -654,6 +654,9 @@ async function postBillPayment({ accountId, payee, amount, mode, scheduledDate, 
   };
 
   if (paymentMethod === 'credit_card') {
+    if (!String(paymentSourceId || "").trim()) {
+      throw new Error("Credit card must be selected for credit card payment");
+    }
     // Credit card payment flow
     const card = await BusinessLayerCard.findOne({
       where: { cardNumber: paymentSourceId },
@@ -736,6 +739,9 @@ async function scheduleBillPayment({ accountId, payee, amount, scheduledDate, re
   }
 
   if (paymentMethod === 'credit_card') {
+    if (!String(paymentSourceId || "").trim()) {
+      throw new Error("Credit card must be selected for scheduled credit card payments");
+    }
     // Validate card before scheduling
     const card = await BusinessLayerCard.findOne({
       where: { cardNumber: paymentSourceId },

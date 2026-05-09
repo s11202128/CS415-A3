@@ -1,6 +1,7 @@
 "use strict";
 
 const express = require("express");
+const { Op } = require("sequelize");
 const CreditCardAccount = require("../models/business/CreditCardAccount");
 const { BusinessLayerCard, Customer } = require("../models");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
@@ -74,13 +75,46 @@ router.get("/list", async (req, res) => {
 // GET /api/creditcard/my-cards — customer-scoped listing of own credit cards.
 router.get("/my-cards", requireAuth, async (req, res) => {
   try {
-    const customerId = String(req.auth?.customerId);
-    if (!customerId || customerId === "undefined") {
+    const idCandidates = new Set();
+    const authCustomerId = Number(req.auth?.customerId || 0);
+    const authUserId = Number(req.auth?.userId || 0);
+    const requestedCustomerId = Number(req.query?.customerId || 0);
+
+    if (Number.isInteger(authCustomerId) && authCustomerId > 0) {
+      idCandidates.add(String(authCustomerId));
+    }
+    if (Number.isInteger(authUserId) && authUserId > 0) {
+      idCandidates.add(String(authUserId));
+    }
+
+    // Admins can inspect a specific customer's cards when customerId is supplied.
+    if (req.auth?.isAdmin && Number.isInteger(requestedCustomerId) && requestedCustomerId > 0) {
+      idCandidates.add(String(requestedCustomerId));
+    }
+
+    // Fallback: derive customer id by authenticated email if ids are not aligned.
+    const email = String(req.auth?.email || "").trim().toLowerCase();
+    if (email) {
+      const emailCustomer = await Customer.findOne({
+        where: {
+          [Op.or]: [
+            { email },
+            { email: { [Op.like]: email } },
+          ],
+        },
+      });
+      if (emailCustomer?.id) {
+        idCandidates.add(String(emailCustomer.id));
+      }
+    }
+
+    const customerIds = Array.from(idCandidates);
+    if (!customerIds.length) {
       return sendError(res, 401, "Authentication required");
     }
 
     const rows = await BusinessLayerCard.findAll({
-      where: { customerId },
+      where: { customerId: { [Op.in]: customerIds } },
       order: [["id", "ASC"]],
     });
 
@@ -88,6 +122,7 @@ router.get("/my-cards", requireAuth, async (req, res) => {
       const card = hydrate(row);
       return {
         cardNumber: card.cardNumber,
+        customerId: row.customerId,
         creditLimit: Number(card.creditLimit),
         currentBalance: Number(card.currentBalance),
         availableCredit: card.getAvailableCredit(),
