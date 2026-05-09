@@ -15,16 +15,25 @@ const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractio
  * CreditCardPage — premium credit-card UI with 3D card visual, KPI tiles,
  * spending sparkline and recent purchases.
  */
-export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
+export default function CreditCardPage({ currentUser, creditCards = [], onCardsChanged, onSelectTab, onPayNow }) {
   const [hide, setHide] = useState(false);
 
-  // Demo placeholder values — wire to real /creditcard endpoints from CreditCardPanel
-  const limit = 5000;
-  const outstanding = 0;
+  const primaryCard = Array.isArray(creditCards) && creditCards.length > 0 ? creditCards[0] : null;
+  const limit = Number(primaryCard?.creditLimit || 0);
+  const outstanding = Number(primaryCard?.currentBalance || 0);
   const available = limit - outstanding;
-  const minPayment = 0;
-  const dueIn = 18;
+  const minPayment = outstanding > 0 ? Math.max(20, outstanding * 0.05) : 0;
+  const dueIn = primaryCard?.statementDue
+    ? Math.max(
+        0,
+        Math.ceil((new Date(primaryCard.statementDue).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+      )
+    : null;
   const points = 12450;
+
+  const maskedCardNumber = primaryCard?.cardNumber
+    ? `${String(primaryCard.cardNumber).slice(0, 4)} ${String(primaryCard.cardNumber).slice(4, 8)} •••• ${String(primaryCard.cardNumber).slice(-4)}`
+    : "•••• •••• •••• ••••";
 
   const purchases = []; // empty until backend feed wired
   const sparkline = Array.from({ length: 14 }, (_, i) => ({ d: i + 1, v: Math.round(Math.random() * 200) }));
@@ -173,7 +182,7 @@ export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
         <h3 className="font-bold text-navy-900 mb-2">Card Operations</h3>
         <p className="text-sm text-slate-600 mb-4">
           Create your card, charge purchases, view your summary and make payments via the
-          existing <code>/creditcard</code> backend.
+        <CreditCardPanel currentUser={currentUser} onCardsChanged={onCardsChanged} />
         </p>
         <CreditCardPanel currentUser={currentUser} />
       </section>

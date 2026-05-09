@@ -41,7 +41,6 @@ export default function AdminCreditCardsTab({ customers = [] }) {
     cardNumber: "",
     customerId: "",
     creditLimit: "",
-    currentBalance: "0",
     statementDue: "",
   });
   const [editing, setEditing] = useState(null);
@@ -71,7 +70,7 @@ export default function AdminCreditCardsTab({ customers = [] }) {
         cardNumber: createForm.cardNumber.trim(),
         customerId: Number(createForm.customerId),
         creditLimit: Number(createForm.creditLimit),
-        currentBalance: Number(createForm.currentBalance || 0),
+        currentBalance: 0,
         statementDue: createForm.statementDue || null,
       });
       setMessage({ tone: "success", text: "Card issued successfully." });
@@ -79,7 +78,6 @@ export default function AdminCreditCardsTab({ customers = [] }) {
         cardNumber: "",
         customerId: "",
         creditLimit: "",
-        currentBalance: "0",
         statementDue: "",
       });
       refresh();
@@ -449,19 +447,12 @@ export default function AdminCreditCardsTab({ customers = [] }) {
               required
             />
           </label>
-          <label className={labelCls}>
+          <div className={`${labelCls} md:col-span-2 lg:col-span-1`}>
             Opening Balance
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className={`${inputCls} mt-1.5`}
-              value={createForm.currentBalance}
-              onChange={(e) =>
-                setCreateForm((f) => ({ ...f, currentBalance: e.target.value }))
-              }
-            />
-          </label>
+            <div className="mt-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              Always starts at FJ$0.00 when a card is issued.
+            </div>
+          </div>
           <label className={labelCls}>
             Statement Due
             <input

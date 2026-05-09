@@ -43,6 +43,7 @@ const SPEND_COLORS = ["#0891b2", "#1e3a8a", "#22d3ee", "#14b8a6", "#a855f7", "#f
 export default function Dashboard({
   currentUser,
   accounts = [],
+  creditCards = [],
   transactions = [],
   lastUpdatedAt,
   isRefreshing,
@@ -94,6 +95,12 @@ export default function Dashboard({
     () => [...transactions].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 6),
     [transactions]
   );
+
+  const primaryCard = Array.isArray(creditCards) && creditCards.length > 0 ? creditCards[0] : null;
+  const teaserCardNumber = primaryCard?.cardNumber
+    ? `${String(primaryCard.cardNumber).slice(0, 4)} ${String(primaryCard.cardNumber).slice(4, 8)} •••• ${String(primaryCard.cardNumber).slice(-4)}`
+    : "•••• •••• •••• ••••";
+  const teaserAvailableCredit = Number(primaryCard?.availableCredit || 0);
 
   const firstName = (currentUser?.fullName || "Customer").split(" ")[0];
 
@@ -220,17 +227,17 @@ export default function Dashboard({
             <div className="relative flex items-start justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-white/70">Credit Card</p>
-                <p className="mt-0.5 text-sm font-semibold">Bank of Fiji Visa</p>
+                <p className="mt-0.5 text-sm font-semibold">{primaryCard ? "Bank of Fiji Visa" : "No card linked"}</p>
               </div>
               <span className="bof-pill bof-pill-info">PREMIUM</span>
             </div>
             <p className="relative mt-6 font-mono tracking-widest text-sm text-white/85">
-              {mask("4521 8932 •••• 7783", hideBalance)}
+              {mask(teaserCardNumber, hideBalance)}
             </p>
             <div className="relative mt-4 flex items-end justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-white/70">Available credit</p>
-                <p className="text-2xl font-bold">{hideBalance ? "•••••" : FJD(0)}</p>
+                <p className="text-2xl font-bold">{hideBalance ? "•••••" : FJD(teaserAvailableCredit)}</p>
               </div>
               <button
                 onClick={() => { onSelectTab?.("Business"); onSelectBusinessSub?.("cards"); }}
