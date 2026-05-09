@@ -214,6 +214,23 @@ export default function App() {
         { hasAdminScope, activeCustomerId: currentUser?.customerId }
       );
 
+      const preferredCustomerIds = [
+        String(currentUser?.customerId || ""),
+        String(currentUser?.userId || ""),
+        ...visibleAccounts.map((a) => String(a.customerId || "")),
+      ].filter(Boolean);
+
+      let resolvedCreditCards = Array.isArray(creditCardRows?.items) ? creditCardRows.items : [];
+      if (!resolvedCreditCards.length) {
+        try {
+          const adminCardRows = await api.listCreditCards();
+          const candidateRows = Array.isArray(adminCardRows?.items) ? adminCardRows.items : [];
+          resolvedCreditCards = candidateRows.filter((row) => preferredCustomerIds.includes(String(row.customerId || "")));
+        } catch (fallbackError) {
+          console.warn("loadInitialData: credit card fallback failed:", fallbackError?.message || fallbackError);
+        }
+      }
+
       setCustomers(visibleCustomers);
       setAccounts(visibleAccounts);
       setScheduledBills(visibleScheduledBills);
@@ -221,7 +238,7 @@ export default function App() {
       setLoanApplications(visibleLoanApplications);
       setInterestRate(rate.reserveBankMinSavingsInterestRate);
       setSummaries(visibleSummaries);
-      setCreditCards(creditCardRows.items || []);
+      setCreditCards(resolvedCreditCards);
       setBillHistory(
         hasAdminScope
           ? billHistoryRows

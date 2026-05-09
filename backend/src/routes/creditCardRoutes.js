@@ -137,14 +137,22 @@ router.get("/my-cards", requireAuth, async (req, res) => {
 });
 
 // POST /api/creditcard/create
-router.post("/create", async (req, res) => {
+router.post("/create", requireAuth, async (req, res) => {
   try {
     const { cardNumber, customerId, creditLimit, currentBalance, statementDue } = req.body || {};
-    if (!customerId) {
+
+    const authCustomerId = Number(req.auth?.customerId || req.auth?.userId || 0);
+    const requestedCustomerId = Number(customerId || 0);
+    const targetCustomerId = req.auth?.isAdmin
+      ? requestedCustomerId
+      : authCustomerId;
+
+    if (!targetCustomerId) {
       return sendError(res, 400, "customerId is required");
     }
+
     // customerId MUST match an existing customer in the bank.
-    const numericCustomerId = Number(customerId);
+    const numericCustomerId = Number(targetCustomerId);
     if (!Number.isInteger(numericCustomerId) || numericCustomerId <= 0) {
       return sendError(res, 400, "customerId must be a positive integer matching an existing customer");
     }

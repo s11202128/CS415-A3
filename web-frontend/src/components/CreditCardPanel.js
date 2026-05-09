@@ -1,31 +1,53 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../api";
 
-const API_BASE = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) || "/api";
-
-async function apiRequest(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
-  const text = await res.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
-  if (!res.ok) {
-    const message = (data && data.error) || `Request failed (${res.status})`;
-    throw new Error(message);
-  }
-  return data;
-}
-
-export default function CreditCardPanel() {
+export default function CreditCardPanel({ currentUser }) {
   const [cardNumber, setCardNumber] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [creditLimit, setCreditLimit] = useState("");
   const [card, setCard] = useState(null);
+  const [myCards, setMyCards] = useState([]);
   const [chargeAmount, setChargeAmount] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const resolvedCustomerId = useMemo(
+    () => String(currentUser?.customerId || currentUser?.userId || ""),
+    [currentUser],
+  );
+
+  async function loadMyCards() {
+    const result = await api.getMyCreditCards();
+    const items = Array.isArray(result?.items) ? result.items : [];
+    setMyCards(items);
+    if (items.length > 0) {
+      const selected = items.find((x) => x.cardNumber === card?.cardNumber) || items[0];
+      setCard(selected);
+    } else {
+      setCard(null);
+    }
+  }
+
+  useEffect(() => {
+    setCustomerId(resolvedCustomerId);
+  }, [resolvedCustomerId]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        await loadMyCards();
+      } catch (err) {
+        if (mounted) {
+          setError(err.message || "Unable to load your credit cards");
+        }
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   function validateAmount(value) {
     const num = Number(value);
@@ -36,8 +58,7 @@ export default function CreditCardPanel() {
   }
 
   async function refresh(id) {
-    const summary = await apiRequest(`/creditcard/${encodeURIComponent(id)}/summary`);
-    setCard(summary);
+    await loadMyCards();
   }
 
   async function handleCreate(e) {
@@ -45,15 +66,18 @@ export default function CreditCardPanel() {
     setError("");
     setBusy(true);
     try {
-      const created = await apiRequest("/creditcard/create", {
-        method: "POST",
-        body: JSON.stringify({
-          cardNumber,
-          customerId,
-          creditLimit: Number(creditLimit),
-        }),
+      const linkedCustomerId = String(customerId || resolvedCustomerId || "");
+      if (!linkedCustomerId) {
+        throw new Error("Missing customer profile. Please log in again.");
+      }
+      await api.createCreditCard({
+        cardNumber,
+        customerId: linkedCustomerId,
+        creditLimit: Number(creditLimit),
       });
-      setCard(created);
+      setCardNumber("");
+      setCreditLimit("");
+      await loadMyCards();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -69,10 +93,7 @@ export default function CreditCardPanel() {
       if (card && amount > card.availableCredit) {
         throw new Error("Charge exceeds available credit");
       }
-      await apiRequest(`/creditcard/${encodeURIComponent(card.cardNumber)}/charge`, {
-        method: "POST",
-        body: JSON.stringify({ amount }),
-      });
+      await api.chargeCreditCard(card.cardNumber, amount);
       setChargeAmount("");
       await refresh(card.cardNumber);
     } catch (err) {
@@ -87,10 +108,7 @@ export default function CreditCardPanel() {
     setBusy(true);
     try {
       const amount = validateAmount(paymentAmount);
-      await apiRequest(`/creditcard/${encodeURIComponent(card.cardNumber)}/payment`, {
-        method: "POST",
-        body: JSON.stringify({ amount }),
-      });
+      await api.payCreditCard(card.cardNumber, amount);
       setPaymentAmount("");
       await refresh(card.cardNumber);
     } catch (err) {
@@ -106,7 +124,7 @@ export default function CreditCardPanel() {
       {!card && (
         <form onSubmit={handleCreate} style={{ display: "grid", gap: 8 }}>
           <label>Card Number: <input value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} required /></label>
-          <label>Customer ID: <input value={customerId} onChange={(e) => setCustomerId(e.target.value)} required /></label>
+          <label>Customer ID: <input value={customerId} required readOnly /></label>
           <label>Credit Limit: <input type="number" min="1" step="0.01" value={creditLimit} onChange={(e) => setCreditLimit(e.target.value)} required /></label>
           <button type="submit" disabled={busy}>Create Card</button>
         </form>
@@ -114,6 +132,23 @@ export default function CreditCardPanel() {
 
       {card && (
         <div>
+          {myCards.length > 1 && (
+            <label style={{ display: "block", marginBottom: 8 }}>
+              Card:
+              <select
+                value={card.cardNumber}
+                onChange={(e) => {
+                  const selected = myCards.find((x) => x.cardNumber === e.target.value);
+                  setCard(selected || null);
+                }}
+                style={{ marginLeft: 8 }}
+              >
+                {myCards.map((x) => (
+                  <option key={x.cardNumber} value={x.cardNumber}>{x.cardNumber}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <p>Card: {card.cardNumber}</p>
           <p>Limit: ${Number(card.creditLimit).toFixed(2)}</p>
           <p>Current Balance: ${Number(card.currentBalance).toFixed(2)}</p>

@@ -175,7 +175,7 @@ export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
           Create your card, charge purchases, view your summary and make payments via the
           existing <code>/creditcard</code> backend.
         </p>
-        <CreditCardPanel />
+        <CreditCardPanel currentUser={currentUser} />
       </section>
     </div>
   );
