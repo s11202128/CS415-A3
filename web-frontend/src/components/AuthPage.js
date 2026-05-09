@@ -1,40 +1,31 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ShieldCheck, Lock, Mail, Phone, User as UserIcon, Eye, EyeOff,
+  ArrowRight, KeyRound, Sparkles, CheckCircle2, AlertCircle, Globe2,
+} from "lucide-react";
 import { api, setToken } from "../api";
-import BankBrand from "./BankBrand";
 
-function EyeIcon({ open }) {
-  return open ? (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-  ) : (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
-    </svg>
-  );
-}
-
+/**
+ * Premium AuthPage — split-screen sign-in/up/forgot/reset experience.
+ * Functionality (api.login / api.register / requestPasswordReset / resetPassword)
+ * is preserved exactly; only the presentation changes.
+ */
 export default function AuthPage({ onLoginSuccess, currentYear }) {
   const [authView, setAuthView] = useState("login");
   const [authForm, setAuthForm] = useState({
-    fullName: "",
-    mobile: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    fullName: "", mobile: "", email: "", password: "", confirmPassword: "",
   });
-  const [resetForm, setResetForm] = useState({ email: "", resetId: "", code: "", newPassword: "", confirmPassword: "" });
+  const [resetForm, setResetForm] = useState({
+    email: "", resetId: "", code: "", newPassword: "", confirmPassword: "",
+  });
   const [authMessage, setAuthMessage] = useState("");
   const [authHint, setAuthHint] = useState("");
   const [showPw, setShowPw] = useState({});
   const [loginPasswordError, setLoginPasswordError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function togglePw(key) {
-    setShowPw((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
+  const togglePw = (k) => setShowPw((p) => ({ ...p, [k]: !p[k] }));
 
   function onAuthViewChange(view) {
     setAuthView(view);
@@ -45,329 +36,358 @@ export default function AuthPage({ onLoginSuccess, currentYear }) {
 
   async function onLogin(e) {
     e.preventDefault();
-    setAuthMessage("");
-    setLoginPasswordError("");
+    setAuthMessage(""); setLoginPasswordError(""); setSubmitting(true);
     try {
       const result = await api.login({ email: authForm.email, password: authForm.password });
       setToken(result.token);
       onLoginSuccess(result.token, {
-        fullName: result.fullName,
-        userId: result.userId,
-        customerId: result.customerId,
-        email: result.email,
-        mobile: result.mobile,
-        nationalId: result.nationalId,
+        fullName: result.fullName, userId: result.userId, customerId: result.customerId,
+        email: result.email, mobile: result.mobile, nationalId: result.nationalId,
         isAdmin: Boolean(result.isAdmin),
       });
-    } catch (err) {
-      const genericMessage = "Invalid email or password.";
-      setLoginPasswordError(genericMessage);
-      setAuthMessage(genericMessage);
-    }
+    } catch {
+      const m = "Invalid email or password.";
+      setLoginPasswordError(m); setAuthMessage(m);
+    } finally { setSubmitting(false); }
   }
 
   async function onRegister(e) {
-    e.preventDefault();
-    setAuthMessage("");
-    if (authForm.password !== authForm.confirmPassword) {
-      setAuthMessage("Passwords do not match");
-      return;
-    }
+    e.preventDefault(); setAuthMessage("");
+    if (authForm.password !== authForm.confirmPassword) { setAuthMessage("Passwords do not match"); return; }
+    setSubmitting(true);
     try {
       const result = await api.register({
-        fullName: authForm.fullName,
-        mobile: authForm.mobile,
-        email: authForm.email,
-        password: authForm.password,
-        confirmPassword: authForm.confirmPassword,
+        fullName: authForm.fullName, mobile: authForm.mobile, email: authForm.email,
+        password: authForm.password, confirmPassword: authForm.confirmPassword,
       });
       setAuthMessage(result.message || "Registration successful. You can now sign in.");
-      setAuthHint("");
-      setAuthView("login");
+      setAuthHint(""); setAuthView("login");
       setAuthForm({ ...authForm, password: "", confirmPassword: "" });
     } catch (err) {
-      // Show detailed backend error if available
       let msg = err.message;
-      if (err && err.response && err.response.error && err.response.error.message) {
-        msg = err.response.error.message;
-      }
+      if (err && err.response && err.response.error && err.response.error.message) msg = err.response.error.message;
       setAuthMessage(msg || "Registration failed. Please try again.");
-    }
+    } finally { setSubmitting(false); }
   }
 
   async function onRequestReset(e) {
-    e.preventDefault();
-    setAuthMessage("");
+    e.preventDefault(); setAuthMessage(""); setSubmitting(true);
     try {
       const result = await api.requestPasswordReset({ email: resetForm.email });
       setAuthMessage(result.message || "Password reset code generated.");
       setAuthHint(result.simulatedResetCode ? `Reset ID: ${result.resetId} | Code: ${result.simulatedResetCode}` : "");
-      setResetForm((prev) => ({
-        ...prev,
-        resetId: result.resetId || "",
-        code: result.simulatedResetCode || "",
-      }));
+      setResetForm((p) => ({ ...p, resetId: result.resetId || "", code: result.simulatedResetCode || "" }));
       setAuthView("reset");
-    } catch (err) {
-      setAuthMessage(err.message);
-    }
+    } catch (err) { setAuthMessage(err.message); }
+    finally { setSubmitting(false); }
   }
 
   async function onResetPassword(e) {
-    e.preventDefault();
-    setAuthMessage("");
-    if (resetForm.newPassword !== resetForm.confirmPassword) {
-      setAuthMessage("Passwords do not match");
-      return;
-    }
+    e.preventDefault(); setAuthMessage("");
+    if (resetForm.newPassword !== resetForm.confirmPassword) { setAuthMessage("Passwords do not match"); return; }
+    setSubmitting(true);
     try {
       await api.resetPassword({
-        email: resetForm.email,
-        resetId: resetForm.resetId,
-        otp: resetForm.code,
-        newPassword: resetForm.newPassword,
+        email: resetForm.email, resetId: resetForm.resetId,
+        otp: resetForm.code, newPassword: resetForm.newPassword,
       });
       setAuthMessage("Password reset complete. Sign in with your new password.");
-      setAuthHint("");
-      setAuthView("login");
-    } catch (err) {
-      setAuthMessage(err.message);
-    }
+      setAuthHint(""); setAuthView("login");
+    } catch (err) { setAuthMessage(err.message); }
+    finally { setSubmitting(false); }
+  }
+
+  const isOk = authMessage && /successful|complete|generated|sign in/i.test(authMessage);
+  const titleByView = {
+    login: "Welcome back",
+    register: "Create your account",
+    forgot: "Recover your access",
+    reset: "Set a new password",
+  };
+  const subtitleByView = {
+    login: "Sign in to access your secure banking dashboard.",
+    register: "Join Bank of Fiji and start managing your money smarter.",
+    forgot: "Enter your email and we'll send a reset code.",
+    reset: "Use the code we sent to set a new password.",
+  };
+
+  // ----- field helpers (closures over state) -----
+  const inputBase =
+    "w-full rounded-xl border bg-white pl-10 pr-3 py-2.5 text-sm text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 transition-colors";
+
+  const Field = ({ icon: Icon, label, hint, children }) => (
+    <label className="block">
+      <span className="block text-xs font-semibold text-slate-700 mb-1.5">
+        {label}{hint && <span className="text-slate-400 font-normal"> · {hint}</span>}
+      </span>
+      <div className="relative">
+        {Icon && <Icon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />}
+        {children}
+      </div>
+    </label>
+  );
+
+  const TextField = ({ icon, label, hint, ...rest }) => (
+    <Field icon={icon} label={label} hint={hint}>
+      <input {...rest} className={`${inputBase} border-slate-200`} />
+    </Field>
+  );
+
+  const PasswordField = ({ id, label, value, onChange, autoComplete, required = true, minLength, error, hint }) => (
+    <Field icon={Lock} label={label} hint={hint}>
+      <input
+        type={showPw[id] ? "text" : "password"}
+        value={value}
+        onChange={onChange}
+        required={required}
+        minLength={minLength}
+        autoComplete={autoComplete}
+        className={`${inputBase} pr-11 ${error ? "border-rose-300" : "border-slate-200"}`}
+      />
+      <button type="button" onClick={() => togglePw(id)}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 grid place-items-center h-7 w-7 rounded-md text-slate-500 hover:text-navy-900 hover:bg-slate-100"
+        aria-label={showPw[id] ? "Hide password" : "Show password"}>
+        {showPw[id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+      {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
+    </Field>
+  );
+
+  const SubmitButton = ({ children }) => (
+    <button type="submit" disabled={submitting}
+      className="group relative w-full rounded-xl bg-gradient-to-r from-navy-900 to-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:shadow-card-hover transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+      <span className="inline-flex items-center justify-center gap-2">
+        {submitting ? "Please wait…" : children}
+        {!submitting && <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />}
+      </span>
+    </button>
+  );
+
+  function renderLogin() {
+    return (
+      <form onSubmit={onLogin} className="space-y-4">
+        <TextField icon={Mail} label="Email address" type="email" required autoComplete="email"
+          placeholder="you@example.com"
+          value={authForm.email}
+          onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })} />
+        <PasswordField id="loginPw" label="Password" autoComplete="current-password"
+          value={authForm.password}
+          error={loginPasswordError}
+          onChange={(e) => {
+            setAuthForm({ ...authForm, password: e.target.value });
+            if (loginPasswordError) { setLoginPasswordError(""); setAuthMessage(""); }
+          }} />
+
+        <div className="flex items-center justify-between text-xs">
+          <label className="inline-flex items-center gap-2 text-slate-600 cursor-pointer">
+            <input type="checkbox" className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
+            Remember me
+          </label>
+          <button type="button" onClick={() => onAuthViewChange("forgot")}
+            className="font-semibold text-cyan-700 hover:text-cyan-900">Forgot password?</button>
+        </div>
+
+        <SubmitButton>Sign in securely</SubmitButton>
+
+        <div className="pt-3 border-t border-slate-100 text-center text-sm">
+          <span className="text-slate-600">New to Bank of Fiji? </span>
+          <button type="button" onClick={() => onAuthViewChange("register")}
+            className="font-semibold text-cyan-700 hover:text-cyan-900 inline-flex items-center gap-1">
+            Create an account <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  function renderRegister() {
+    return (
+      <form onSubmit={onRegister} className="space-y-4">
+        <TextField icon={UserIcon} label="Full name" required autoComplete="name"
+          placeholder="Your full legal name"
+          value={authForm.fullName}
+          onChange={(e) => setAuthForm({ ...authForm, fullName: e.target.value })} />
+        <TextField icon={Phone} label="Mobile number" required autoComplete="tel"
+          placeholder="+6797001001"
+          value={authForm.mobile}
+          onChange={(e) => setAuthForm({ ...authForm, mobile: e.target.value })} />
+        <TextField icon={Mail} label="Email address" type="email" required autoComplete="email"
+          placeholder="you@example.com"
+          value={authForm.email}
+          onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })} />
+        <PasswordField id="regPw" label="Password" autoComplete="new-password" minLength={8}
+          hint="min 8 characters"
+          value={authForm.password}
+          onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })} />
+        <PasswordField id="regConfirm" label="Confirm password" autoComplete="new-password"
+          value={authForm.confirmPassword}
+          onChange={(e) => setAuthForm({ ...authForm, confirmPassword: e.target.value })} />
+
+        <SubmitButton>Create account</SubmitButton>
+
+        <p className="text-[11px] text-slate-500 text-center">
+          By creating an account you agree to our <span className="text-navy-900 font-semibold">Terms</span> &{" "}
+          <span className="text-navy-900 font-semibold">Privacy Policy</span>.
+        </p>
+
+        <div className="pt-3 border-t border-slate-100 text-center text-sm">
+          <span className="text-slate-600">Already have an account? </span>
+          <button type="button" onClick={() => onAuthViewChange("login")}
+            className="font-semibold text-cyan-700 hover:text-cyan-900">Sign in</button>
+        </div>
+      </form>
+    );
+  }
+
+  function renderForgot() {
+    return (
+      <form onSubmit={onRequestReset} className="space-y-4">
+        <TextField icon={Mail} label="Email address" type="email" required
+          placeholder="you@example.com"
+          value={resetForm.email}
+          onChange={(e) => setResetForm({ ...resetForm, email: e.target.value })} />
+        <SubmitButton>Send reset code</SubmitButton>
+        <div className="pt-3 border-t border-slate-100 text-center text-sm">
+          <button type="button" onClick={() => onAuthViewChange("login")}
+            className="font-semibold text-cyan-700 hover:text-cyan-900">Back to sign in</button>
+        </div>
+      </form>
+    );
+  }
+
+  function renderReset() {
+    return (
+      <form onSubmit={onResetPassword} className="space-y-4">
+        <TextField icon={Mail} label="Email address" type="email" required
+          value={resetForm.email}
+          onChange={(e) => setResetForm({ ...resetForm, email: e.target.value })} />
+        <TextField icon={KeyRound} label="Reset ID" required
+          value={resetForm.resetId}
+          onChange={(e) => setResetForm({ ...resetForm, resetId: e.target.value })} />
+        <TextField icon={KeyRound} label="Reset code" required
+          value={resetForm.code}
+          onChange={(e) => setResetForm({ ...resetForm, code: e.target.value })} />
+        <PasswordField id="resetNewPw" label="New password"
+          value={resetForm.newPassword}
+          onChange={(e) => setResetForm({ ...resetForm, newPassword: e.target.value })} />
+        <PasswordField id="resetConfirm" label="Confirm new password"
+          value={resetForm.confirmPassword}
+          onChange={(e) => setResetForm({ ...resetForm, confirmPassword: e.target.value })} />
+        <SubmitButton>Reset password</SubmitButton>
+        <div className="pt-3 border-t border-slate-100 text-center text-sm">
+          <button type="button" onClick={() => onAuthViewChange("login")}
+            className="font-semibold text-cyan-700 hover:text-cyan-900">Back to sign in</button>
+        </div>
+      </form>
+    );
   }
 
   return (
-    <div className="app-shell">
-      <header className="hero">
-        <BankBrand
-          className="auth-hero-brand"
-          title="Bank of Fiji"
-          subtitle={authView === "login" ? "Sign in to access your banking dashboard." : "Create your online banking account."}
-        />
-      </header>
-      <section className="panel-grid">
-        <article className="panel auth-card">
-          {authView === "login" ? (
-            <>
-              <h2>Sign In</h2>
-              <form onSubmit={onLogin}>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    value={authForm.email}
-                    onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-                    required
-                    autoComplete="email"
-                  />
-                </label>
-                <label>
-                  Password
-                  <div className="pw-wrap">
-                    <input
-                      className={loginPasswordError ? "auth-input-error" : ""}
-                      type={showPw.loginPw ? "text" : "password"}
-                      value={authForm.password}
-                      onChange={(e) => {
-                        setAuthForm({ ...authForm, password: e.target.value });
-                        if (loginPasswordError) {
-                          setLoginPasswordError("");
-                          setAuthMessage("");
-                        }
-                      }}
-                      required
-                      autoComplete="current-password"
-                    />
-                    <button type="button" className="pw-toggle" onClick={() => togglePw("loginPw")} aria-label={showPw.loginPw ? "Hide password" : "Show password"}>
-                      <EyeIcon open={showPw.loginPw} />
-                    </button>
-                  </div>
-                  {loginPasswordError && <p className="auth-inline-error">{loginPasswordError}</p>}
-                </label>
-                <button type="submit" className="btn-primary">Sign In</button>
-              </form>
-              {authMessage && <p className={authMessage.startsWith("Registration") ? "status ok" : "status error"}>{authMessage}</p>}
-              <div className="auth-switch-row">
-                <button type="button" className="auth-action-row" onClick={() => onAuthViewChange("register")}>
-                  <span className="auth-action-row__label">New customer?</span>
-                  <span className="auth-action-row__cta">Create an account <span className="auth-action-row__arrow">&#8594;</span></span>
-                </button>
-                <button type="button" className="auth-action-row" onClick={() => onAuthViewChange("forgot")}>
-                  <span className="auth-action-row__label">Forgot your password?</span>
-                  <span className="auth-action-row__cta">Recover access <span className="auth-action-row__arrow">&#8594;</span></span>
-                </button>
-              </div>
-            </>
-          ) : authView === "register" ? (
-            <>
-              <h2>Create Account</h2>
-              <form onSubmit={onRegister}>
-                <label>
-                  Full Name
-                  <input
-                    value={authForm.fullName}
-                    onChange={(e) => setAuthForm({ ...authForm, fullName: e.target.value })}
-                    required
-                    autoComplete="name"
-                  />
-                </label>
-                <label>
-                  Mobile Number
-                  <input
-                    value={authForm.mobile}
-                    placeholder="+6797001001"
-                    onChange={(e) => setAuthForm({ ...authForm, mobile: e.target.value })}
-                    required
-                    autoComplete="tel"
-                  />
-                </label>
-                <label>
-                  Email Address
-                  <input
-                    type="email"
-                    value={authForm.email}
-                    onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-                    required
-                    autoComplete="email"
-                  />
-                </label>
-                <label>
-                  Password <span className="hint-inline">(min 8 characters)</span>
-                  <div className="pw-wrap">
-                    <input
-                      type={showPw.regPw ? "text" : "password"}
-                      value={authForm.password}
-                      onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-                      required
-                      minLength={8}
-                      autoComplete="new-password"
-                    />
-                    <button type="button" className="pw-toggle" onClick={() => togglePw("regPw")} aria-label={showPw.regPw ? "Hide password" : "Show password"}>
-                      <EyeIcon open={showPw.regPw} />
-                    </button>
-                  </div>
-                </label>
-                <label>
-                  Confirm Password
-                  <div className="pw-wrap">
-                    <input
-                      type={showPw.regConfirm ? "text" : "password"}
-                      value={authForm.confirmPassword}
-                      onChange={(e) => setAuthForm({ ...authForm, confirmPassword: e.target.value })}
-                      required
-                      autoComplete="new-password"
-                    />
-                    <button type="button" className="pw-toggle" onClick={() => togglePw("regConfirm")} aria-label={showPw.regConfirm ? "Hide password" : "Show password"}>
-                      <EyeIcon open={showPw.regConfirm} />
-                    </button>
-                  </div>
-                </label>
-                <button type="submit" className="btn-primary">Create Account</button>
-              </form>
-              {authMessage && <p className="status error">{authMessage}</p>}
-              {authHint && <p className="otp-notice">{authHint}</p>}
-              <p className="auth-switch">
-                Already have an account?{" "}
-                <button type="button" className="link-btn" onClick={() => onAuthViewChange("login")}>
-                  Sign in here
-                </button>
-              </p>
-            </>
-          ) : authView === "forgot" ? (
-            <>
-              <h2>Forgot Password</h2>
-              <form onSubmit={onRequestReset}>
-                <label>
-                  Email Address
-                  <input
-                    type="email"
-                    value={resetForm.email}
-                    onChange={(e) => setResetForm({ ...resetForm, email: e.target.value })}
-                    required
-                  />
-                </label>
-                <button type="submit" className="btn-primary">Send Reset Code</button>
-              </form>
-              {authMessage && <p className="status error">{authMessage}</p>}
-              {authHint && <p className="otp-notice">{authHint}</p>}
-              <p className="auth-switch">
-                Remembered it?{" "}
-                <button type="button" className="link-btn" onClick={() => onAuthViewChange("login")}>
-                  Sign in here
-                </button>
-              </p>
-            </>
-          ) : (
-            <>
-              <h2>Reset Password</h2>
-              <form onSubmit={onResetPassword}>
-                <label>
-                  Email Address
-                  <input
-                    type="email"
-                    value={resetForm.email}
-                    onChange={(e) => setResetForm({ ...resetForm, email: e.target.value })}
-                    required
-                  />
-                </label>
-                <label>
-                  Reset ID
-                  <input
-                    value={resetForm.resetId}
-                    onChange={(e) => setResetForm({ ...resetForm, resetId: e.target.value })}
-                    required
-                  />
-                </label>
-                <label>
-                  Reset Code
-                  <input
-                    value={resetForm.code}
-                    onChange={(e) => setResetForm({ ...resetForm, code: e.target.value })}
-                    required
-                  />
-                </label>
-                <label>
-                  New Password
-                  <div className="pw-wrap">
-                    <input
-                      type={showPw.resetNewPw ? "text" : "password"}
-                      value={resetForm.newPassword}
-                      onChange={(e) => setResetForm({ ...resetForm, newPassword: e.target.value })}
-                      required
-                    />
-                    <button type="button" className="pw-toggle" onClick={() => togglePw("resetNewPw")} aria-label={showPw.resetNewPw ? "Hide password" : "Show password"}>
-                      <EyeIcon open={showPw.resetNewPw} />
-                    </button>
-                  </div>
-                </label>
-                <label>
-                  Confirm New Password
-                  <div className="pw-wrap">
-                    <input
-                      type={showPw.resetConfirm ? "text" : "password"}
-                      value={resetForm.confirmPassword}
-                      onChange={(e) => setResetForm({ ...resetForm, confirmPassword: e.target.value })}
-                      required
-                    />
-                    <button type="button" className="pw-toggle" onClick={() => togglePw("resetConfirm")} aria-label={showPw.resetConfirm ? "Hide password" : "Show password"}>
-                      <EyeIcon open={showPw.resetConfirm} />
-                    </button>
-                  </div>
-                </label>
-                <button type="submit" className="btn-primary">Reset Password</button>
-              </form>
-              {authMessage && <p className="status error">{authMessage}</p>}
-              {authHint && <p className="otp-notice">{authHint}</p>}
-              <p className="auth-switch">
-                Back to{" "}
-                <button type="button" className="link-btn" onClick={() => onAuthViewChange("login")}>
-                  Sign in
-                </button>
-              </p>
-            </>
-          )}
-        </article>
+    <div className="min-h-screen w-full bg-canvas grid lg:grid-cols-2 font-sans">
+      {/* LEFT — Brand panel */}
+      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 text-white p-10">
+        <div className="absolute -top-32 -left-24 h-96 w-96 rounded-full bg-cyan-400/20 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-teal-400/15 blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.04]"
+          style={{ backgroundImage: "radial-gradient(white 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
 
-      </section>
+        <div className="relative flex items-center gap-3">
+          <div className="grid place-items-center h-12 w-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-400 text-navy-950 font-extrabold shadow-glow text-lg">BF</div>
+          <div>
+            <p className="font-display font-bold text-xl leading-tight">Bank of Fiji</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-300/80">Online Banking</p>
+          </div>
+        </div>
+
+        <div className="relative max-w-md">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold text-cyan-200">
+            <Sparkles className="h-3.5 w-3.5" /> Premium digital banking
+          </span>
+          <h1 className="mt-5 font-display text-4xl xl:text-5xl font-extrabold leading-tight">
+            Banking that moves at the <span className="text-cyan-300">speed of life.</span>
+          </h1>
+          <p className="mt-4 text-slate-300 text-base">
+            Manage accounts, transfer money, pay bills, invest and chat with our AI assistant —
+            all from one beautifully simple dashboard.
+          </p>
+          <ul className="mt-8 space-y-3 text-sm">
+            {[
+              { i: ShieldCheck, t: "Bank-grade encryption", s: "256-bit TLS, OTP & device alerts" },
+              { i: Globe2,      t: "Pay anyone, anywhere", s: "Local, international & wallet transfers" },
+              { i: Sparkles,    t: "AI-powered insights",  s: "See where your money goes each month" },
+            ].map(({ i: Icon, t, s }) => (
+              <li key={t} className="flex items-start gap-3">
+                <div className="grid place-items-center h-9 w-9 rounded-xl bg-white/10 ring-1 ring-white/10">
+                  <Icon className="h-4 w-4 text-cyan-300" />
+                </div>
+                <div>
+                  <p className="font-semibold">{t}</p>
+                  <p className="text-slate-400 text-xs">{s}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="relative text-xs text-slate-400 flex items-center justify-between">
+          <span>© {currentYear || new Date().getFullYear()} Bank of Fiji. All rights reserved.</span>
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Secure connection
+          </span>
+        </div>
+      </aside>
+
+      {/* RIGHT — Form panel */}
+      <main className="relative flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-md">
+          {/* Mobile brand */}
+          <div className="lg:hidden flex items-center gap-3 mb-8">
+            <div className="grid place-items-center h-11 w-11 rounded-2xl bg-gradient-to-br from-navy-900 to-cyan-600 text-white font-extrabold shadow-card">BF</div>
+            <div>
+              <p className="font-display font-bold text-navy-900">Bank of Fiji</p>
+              <p className="text-[10px] uppercase tracking-widest text-slate-500">Online Banking</p>
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={authView}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">Bank of Fiji</p>
+              <h2 className="mt-1 font-display text-3xl font-extrabold text-navy-900">{titleByView[authView]}</h2>
+              <p className="mt-2 text-slate-600 text-sm">{subtitleByView[authView]}</p>
+
+              {authMessage && (
+                <div className={[
+                  "mt-5 flex items-start gap-2 rounded-xl border px-3 py-2.5 text-sm",
+                  isOk ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800",
+                ].join(" ")}>
+                  {isOk ? <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" /> : <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />}
+                  <span>{authMessage}</span>
+                </div>
+              )}
+              {authHint && (
+                <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-mono text-amber-800 break-all">
+                  {authHint}
+                </div>
+              )}
+
+              <div className="mt-6">
+                {authView === "login"    && renderLogin()}
+                {authView === "register" && renderRegister()}
+                {authView === "forgot"   && renderForgot()}
+                {authView === "reset"    && renderReset()}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          <p className="mt-10 text-center text-[11px] text-slate-400 lg:hidden">
+            © {currentYear || new Date().getFullYear()} Bank of Fiji
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

@@ -18,6 +18,22 @@ import ProfileTab from "./components/tabs/ProfileTab";
 import AdminLockScreen from "./components/tabs/AdminLockScreen";
 import AccountManager from "./components/AccountManager";
 import CreditCardPanel from "./components/CreditCardPanel";
+// New premium UI shell (Phase 1 + 2)
+import AppLayout from "./components/layout/AppLayout";
+import AccountsPage from "./components/pages/AccountsPage";
+import BusinessPage from "./components/pages/BusinessPage";
+import CreditCardPage from "./components/pages/CreditCardPage";
+import InvestmentsPage from "./components/pages/InvestmentsPage";
+import AlertsPage from "./components/pages/AlertsPage";
+import SupportPage from "./components/pages/SupportPage";
+import {
+  TransfersPage,
+  BillPaymentsPage,
+  StatementsPage,
+  LoansPage,
+  ProfilePage,
+} from "./components/pages/WrappedPages";
+import Dashboard from "./components/dashboard/Dashboard";
 // Chatbot widget – additive, shown on every page
 import ChatWidget from "./components/chatbot/ChatWidget";
 
@@ -784,218 +800,145 @@ export default function App() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="app-shell">
-      <header className="hero">
-        <div className="hero-row">
-          <BankBrand
-            className="hero-brand"
-            compact
-            eyebrow="Online Banking"
-            title="Bank of Fiji"
-            subtitle="Home dashboard"
+    <>
+      <AppLayout
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        onSelectBusinessSub={setBusinessSubTab}
+        currentUser={currentUser}
+        isAdminUser={isAdminUser}
+        onLogout={onLogout}
+        onOpenAdmin={() => { setShowAdmin(true); setAdminAuthMessage(""); }}
+        notificationsCount={notifications?.length || 0}
+      >
+        {error && (
+          <p className="status error" style={{ marginBottom: 16 }}>
+            <strong>Error:</strong> {error}
+          </p>
+        )}
+        {loading && !error && <p className="status">Loading data...</p>}
+        {!currentUser && !loading && !error && (
+          <p className="status">Please wait while we load your account information...</p>
+        )}
+
+        {currentUser && !loading && activeTab === "Overview" && (
+          <Dashboard
+            currentUser={currentUser}
+            accounts={accounts}
+            transactions={customerTransactions}
+            lastUpdatedAt={lastUpdatedAt}
+            isRefreshing={loading}
+            onRefresh={loadInitialData}
+            onSelectTab={setActiveTab}
+            onSelectBusinessSub={setBusinessSubTab}
           />
-          {currentUser && (
-            <div className="hero-user">
-              <span>Welcome, <strong>{currentUser.fullName}</strong></span>
-              {!isAdminUser && <button className="admin-btn" onClick={() => { setShowAdmin(true); setAdminAuthMessage(""); }}>Admin</button>}
-              <button className="logout-btn" onClick={onLogout}>Logout</button>
-            </div>
-          )}
-        </div>
-      </header>
+        )}
 
-      <div className="workspace-layout">
-        <aside className="left-tabs">
-          {currentUser ? (
-            <nav className="tabs">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  className={tab === activeTab ? "tab active" : "tab"}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </nav>
-          ) : (
-            <p className="status">Loading...</p>
-          )}
-        </aside>
+        {!loading && currentUser && activeTab === "Accounts" && (
+          <AccountsPage
+            accounts={accounts}
+            currentUser={currentUser}
+            accountMessage={accountMessage}
+            setAccountMessage={setAccountMessage}
+          />
+        )}
 
-        <section className="tab-content">
-          {/* Manual refresh button for customers only */}
-          {currentUser && !isAdminUser && (
-            <button className="refresh-btn" style={{ marginBottom: 16 }} onClick={() => loadInitialData()}>
-              Refresh
-            </button>
-          )}
-          {error && <p className="status error"><strong>Error:</strong> {error}</p>}
-          {loading && !error && <p className="status">Loading data...</p>}
-          {!currentUser && !loading && !error && (
-            <p className="status">Please wait while we load your account information...</p>
-          )}
-          
-          {/* Debug info - remove after testing */}
-          {!currentUser && !error && (
-            <div style={{padding: '20px', color: '#999', fontSize: '12px', borderTop: '1px solid #eee', marginTop: '20px'}}>
-              <p>Debug - authToken: {authToken ? '✓' : '✗'} | currentUser: {currentUser ? '✓' : '✗'} | loading: {loading ? '✓' : '✗'}</p>
-            </div>
-          )}
+        {!loading && currentUser && activeTab === "Transfers" && (
+          <TransfersPage
+            accounts={accounts}
+            transferForm={transferForm}
+            setTransferForm={setTransferForm}
+            onInitiateTransfer={onInitiateTransfer}
+            pendingTransfer={pendingTransfer}
+            setPendingTransfer={setPendingTransfer}
+            onVerifyTransfer={onVerifyTransfer}
+            transferMessage={transferMessage}
+            setTransferMessage={setTransferMessage}
+          />
+        )}
 
-          {currentUser && !loading && activeTab === "Overview" && (
-            <HomePage
-              totalBalance={accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0)}
-              currentUser={currentUser}
-              lastUpdatedAt={lastUpdatedAt}
-              onRefreshOverview={loadInitialData}
-              isRefreshing={loading}
-              accounts={accounts}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Bill Payments" && (
+          <BillPaymentsPage
+            accounts={accounts}
+            manualBillForm={manualBillForm}
+            setManualBillForm={setManualBillForm}
+            onManualBill={onManualBill}
+            scheduleBillForm={scheduleBillForm}
+            setScheduleBillForm={setScheduleBillForm}
+            onScheduleBill={onScheduleBill}
+            billHistory={billHistory}
+            runScheduledBill={runScheduledBill}
+            billMessage={billMessage}
+          />
+        )}
 
-          {!loading && currentUser && activeTab === "Accounts" && (
-            <AccountsTab
-              accounts={accounts}
-              currentUser={currentUser}
-              accountMessage={accountMessage}
-              setAccountMessage={setAccountMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Statements" && (
+          <StatementsPage
+            accounts={accounts}
+            transactions={customerTransactions}
+            customers={customers}
+            statementAccount={statementAccount}
+            setStatementAccount={setStatementAccount}
+            statementRows={statementRows}
+            statementRequested={statementRequested}
+            statementRequests={statementRequests}
+            statementMessage={statementMessage}
+            setStatementMessage={setStatementMessage}
+            currentUser={currentUser}
+            fetchStatement={fetchStatement}
+            onSubmitStatementRequest={onSubmitStatementRequest}
+            onDownloadStatement={onDownloadStatement}
+            notificationCustomer={notificationCustomer}
+            setNotificationCustomer={setNotificationCustomer}
+            notifications={notifications}
+          />
+        )}
 
-          {!loading && currentUser && activeTab === "Transfers" && (
-            <TransfersTab
-              accounts={accounts}
-              transferForm={transferForm}
-              setTransferForm={setTransferForm}
-              onInitiateTransfer={onInitiateTransfer}
-              pendingTransfer={pendingTransfer}
-              setPendingTransfer={setPendingTransfer}
-              onVerifyTransfer={onVerifyTransfer}
-              transferMessage={transferMessage}
-              setTransferMessage={setTransferMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Loans" && (
+          <LoansPage
+            customers={customers}
+            customerMap={customerMap}
+            loanProducts={loanProducts}
+            loanApplications={loanApplications}
+            loanForm={loanForm}
+            setLoanForm={setLoanForm}
+            onSubmitLoan={onSubmitLoan}
+            loanMessage={loanMessage}
+            setLoanMessage={setLoanMessage}
+          />
+        )}
 
-          {!loading && currentUser && activeTab === "Bill Payments" && (
-            <BillPaymentsTab
-              accounts={accounts}
-              manualBillForm={manualBillForm}
-              setManualBillForm={setManualBillForm}
-              onManualBill={onManualBill}
-              scheduleBillForm={scheduleBillForm}
-              setScheduleBillForm={setScheduleBillForm}
-              onScheduleBill={onScheduleBill}
-              billHistory={billHistory}
-              runScheduledBill={runScheduledBill}
-              billMessage={billMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Business" && businessSubTab === "accounts" && (
+          <BusinessPage accounts={accounts} transactions={customerTransactions} />
+        )}
 
-          {!loading && currentUser && activeTab === "Statements" && (
-            <StatementsTab
-              accounts={accounts}
-              transactions={customerTransactions}
-              customers={customers}
-              statementAccount={statementAccount}
-              setStatementAccount={setStatementAccount}
-              statementRows={statementRows}
-              statementRequested={statementRequested}
-              statementRequests={statementRequests}
-              statementMessage={statementMessage}
-              setStatementMessage={setStatementMessage}
-              currentUser={currentUser}
-              fetchStatement={fetchStatement}
-              onSubmitStatementRequest={onSubmitStatementRequest}
-              onDownloadStatement={onDownloadStatement}
-              notificationCustomer={notificationCustomer}
-              setNotificationCustomer={setNotificationCustomer}
-              notifications={notifications}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Business" && businessSubTab === "cards" && (
+          <CreditCardPage currentUser={currentUser} />
+        )}
 
-          {!loading && currentUser && activeTab === "Loans" && (
-            <LoansTab
-              customers={customers}
-              customerMap={customerMap}
-              loanProducts={loanProducts}
-              loanApplications={loanApplications}
-              loanForm={loanForm}
-              setLoanForm={setLoanForm}
-              onSubmitLoan={onSubmitLoan}
-              loanMessage={loanMessage}
-              setLoanMessage={setLoanMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Investments" && (
+          <InvestmentsPage />
+        )}
 
-          {!loading && currentUser && activeTab === "Business" && (
-            <section className="account-lab" style={{ display: "grid", gap: 16 }}>
-              <header>
-                <h2>Business</h2>
-                <p style={{ color: "#555", marginTop: -4 }}>
-                  Manage the new account-type business layer (Access / Savings / Business)
-                  and the optional standalone Credit Card product. Switch between the two
-                  using the tabs below.
-                </p>
-                <div
-                  role="tablist"
-                  aria-label="Business sub-sections"
-                  style={{
-                    display: "inline-flex",
-                    gap: 6,
-                    marginTop: 12,
-                    padding: 4,
-                    border: "1px solid #d8dee9",
-                    borderRadius: 999,
-                    background: "#f5f7fb",
-                  }}
-                >
-                  {[
-                    { id: "accounts", label: "Business Accounts" },
-                    { id: "cards", label: "Credit Cards" },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={businessSubTab === t.id}
-                      onClick={() => setBusinessSubTab(t.id)}
-                      style={{
-                        padding: "6px 16px",
-                        borderRadius: 999,
-                        border: "none",
-                        cursor: "pointer",
-                        fontWeight: 600,
-                        background: businessSubTab === t.id ? "#0a1733" : "transparent",
-                        color: businessSubTab === t.id ? "#fff" : "#1f2a44",
-                        transition: "background 0.15s ease",
-                      }}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </header>
+        {!loading && currentUser && activeTab === "Alerts" && (
+          <AlertsPage notifications={notifications} />
+        )}
 
-              {businessSubTab === "accounts" && <AccountManager />}
-              {businessSubTab === "cards" && <CreditCardPanel />}
-            </section>
-          )}
+        {!loading && currentUser && activeTab === "Support" && (
+          <SupportPage />
+        )}
 
-          {!loading && currentUser && activeTab === "Profile" && (
-            <ProfileTab
-              profileForm={profileForm}
-              setProfileForm={setProfileForm}
-              onUpdateProfile={onUpdateProfile}
-              profileMessage={profileMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Profile" && (
+          <ProfilePage
+            profileForm={profileForm}
+            setProfileForm={setProfileForm}
+            onUpdateProfile={onUpdateProfile}
+            profileMessage={profileMessage}
+          />
+        )}
+      </AppLayout>
 
-        </section>
-      </div>
-
-      <SiteFooter currentYear={currentYear} />
       <ChatWidget currentUser={currentUser} authToken={authToken} />
-    </div>
+    </>
   );
 }

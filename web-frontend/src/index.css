@@ -1,0 +1,251 @@
+/* Tailwind layers — additive on top of existing styles.css.
+   Existing class names continue to work; new components use Tailwind utilities. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "cv02", "cv11", "ss01";
+  }
+}
+
+@layer components {
+  .bof-card {
+    @apply bg-white rounded-2xl shadow-card p-5 transition-shadow hover:shadow-card-hover;
+  }
+  .bof-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+  .bof-pill-success { @apply bg-emerald-50 text-emerald-700; }
+  .bof-pill-warn    { @apply bg-amber-50 text-amber-700; }
+  .bof-pill-danger  { @apply bg-rose-50 text-rose-700; }
+  .bof-pill-info    { @apply bg-cyan-50 text-cyan-700; }
+
+  .bof-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all;
+  }
+  .bof-btn-primary {
+    @apply bg-navy-900 text-white hover:bg-navy-800 active:scale-[0.98] shadow-sm;
+  }
+  .bof-btn-ghost {
+    @apply text-navy-900 hover:bg-navy-50;
+  }
+  .bof-btn-cyan {
+    @apply bg-gradient-to-r from-cyan-500 to-teal-400 text-white hover:from-cyan-600 hover:to-teal-500 shadow-sm;
+  }
+
+  .bof-input {
+    @apply w-full rounded-xl border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-200;
+  }
+
+  .bof-skeleton {
+    @apply rounded-md bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:800px_100%] animate-shimmer;
+  }
+}
+
+/* =====================================================================
+   PREMIUM OVERRIDES for legacy tab markup
+   These rules restyle the existing tab components (AccountsTab, TransfersTab,
+   BillPaymentsTab, StatementsTab, LoansTab, ProfileTab, ComplianceTab) so
+   they look premium without changing any of their JSX or behavior.
+   They are scoped under .bof-card to only fire inside the new shell wrapper.
+   ===================================================================== */
+@layer components {
+  /* Neutralize the inner panel-grid/panel double-card nesting */
+  .bof-card .panel-grid {
+    display: block;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+  }
+  .bof-card .panel,
+  .bof-card .panel.wide,
+  .bof-card .panel.auth-card {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+  }
+
+  /* Section headings inside tabs */
+  .bof-card .acct-tab-body > h2,
+  .bof-card .panel > h2,
+  .bof-card .panel > header > h2 {
+    @apply font-display text-xl font-bold text-navy-900 mb-2;
+  }
+  .bof-card .panel > header > p,
+  .bof-card .acct-tab-body > p.hint,
+  .bof-card .transfers-tab-desc {
+    @apply text-sm text-slate-600;
+  }
+  .bof-card .hint {
+    @apply text-xs text-slate-500;
+  }
+
+  /* ---- Premium horizontal pill tab bar ---- */
+  .bof-card .acct-tab-bar {
+    @apply flex flex-wrap gap-1.5 mb-5 p-1.5 rounded-2xl bg-slate-100/80 border border-slate-200;
+  }
+  .bof-card .acct-tab-btn {
+    @apply rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-navy-900 hover:bg-white/70 transition-colors;
+    background: transparent;
+    border: none;
+  }
+  .bof-card .acct-tab-btn.active {
+    @apply bg-white text-navy-900 shadow-sm;
+  }
+
+  /* ---- Premium form fields (admin-form, generic forms inside tabs) ---- */
+  .bof-card form label,
+  .bof-card .admin-form label,
+  .bof-card .auth-card form label {
+    @apply block text-xs font-semibold text-slate-700 mb-3;
+  }
+  .bof-card form input[type="text"],
+  .bof-card form input[type="email"],
+  .bof-card form input[type="number"],
+  .bof-card form input[type="tel"],
+  .bof-card form input[type="date"],
+  .bof-card form input[type="password"],
+  .bof-card form input:not([type]),
+  .bof-card form select,
+  .bof-card form textarea {
+    @apply mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-navy-900 placeholder-slate-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 transition-colors;
+    box-shadow: none;
+  }
+  .bof-card form input[readonly] {
+    @apply bg-slate-50 text-slate-500 cursor-not-allowed;
+  }
+  .bof-card form select { background-color: white; }
+  .bof-card form textarea { @apply min-h-[80px]; }
+
+  /* Inline currency input wrapper */
+  .bof-card .loan-currency-input {
+    @apply relative mt-1.5;
+  }
+  .bof-card .loan-currency-input .loan-currency-prefix {
+    @apply absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500 pointer-events-none;
+  }
+  .bof-card .loan-currency-input input {
+    @apply pl-7 mt-0;
+  }
+
+  /* ---- Premium primary action button (covers most form submits) ---- */
+  .bof-card form button[type="submit"],
+  .bof-card .admin-form button[type="submit"],
+  .bof-card form > button:not([type="button"]) {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white;
+    background-image: linear-gradient(to right, theme(colors.navy.900), theme(colors.cyan.600));
+    box-shadow: 0 8px 20px -8px rgba(15, 23, 42, 0.45);
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    border: none;
+  }
+  .bof-card form button[type="submit"]:hover:not(:disabled),
+  .bof-card form > button:not([type="button"]):hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px -10px rgba(15, 23, 42, 0.55);
+  }
+  .bof-card form button[type="submit"]:disabled,
+  .bof-card form > button:not([type="button"]):disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* ---- Status messages ---- */
+  .bof-card .status,
+  .bof-card .status.error,
+  .bof-card .status.success,
+  .bof-card .status.ok {
+    @apply mt-3 rounded-xl border px-3 py-2 text-sm;
+  }
+  .bof-card .status.error,
+  .bof-card .status:not(.success):not(.ok):not(.pending) { @apply border-rose-200 bg-rose-50 text-rose-800; }
+  .bof-card .status.success,
+  .bof-card .status.ok                                   { @apply border-emerald-200 bg-emerald-50 text-emerald-800; }
+  .bof-card .status.pending                              { @apply border-amber-200 bg-amber-50 text-amber-800; }
+
+  /* ---- Tables ---- */
+  .bof-card table {
+    @apply w-full text-sm border-separate border-spacing-0;
+  }
+  .bof-card table thead th {
+    @apply text-left text-[11px] uppercase tracking-wider font-semibold text-slate-500 bg-slate-50 px-3 py-2.5 border-b border-slate-100;
+  }
+  .bof-card table tbody td {
+    @apply px-3 py-3 border-b border-slate-100 text-navy-900 align-top;
+  }
+  .bof-card table tbody tr:hover { @apply bg-slate-50/60; }
+  .bof-card table .account-number {
+    font-family: theme(fontFamily.mono);
+    @apply text-navy-800 font-semibold;
+  }
+  .bof-card table .balance,
+  .bof-card table .balance strong { @apply font-bold text-navy-900; }
+  .bof-card table .balance-pending { @apply text-slate-400; }
+  .bof-card table .date { @apply text-xs text-slate-500; }
+
+  /* ---- Status badges ---- */
+  .bof-card .status-badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold;
+  }
+  .bof-card .status-badge.status-active   { @apply bg-emerald-50 text-emerald-700; }
+  .bof-card .status-badge.status-pending  { @apply bg-amber-50 text-amber-700; }
+  .bof-card .status-badge.status-rejected,
+  .bof-card .status-badge.status-failed,
+  .bof-card .status-badge.status-frozen   { @apply bg-rose-50 text-rose-700; }
+  .bof-card .status-badge.status-approved { @apply bg-cyan-50 text-cyan-700; }
+
+  /* ---- Account summary block (AccountsTab Summary section) ---- */
+  .bof-card .account-summary {
+    @apply grid sm:grid-cols-3 gap-4 my-4;
+  }
+  .bof-card .account-summary .summary-item {
+    @apply rounded-2xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 p-4;
+  }
+  .bof-card .account-summary .summary-item .label {
+    @apply block text-[10px] uppercase tracking-widest text-slate-500 font-semibold;
+  }
+  .bof-card .account-summary .summary-item .value {
+    @apply block mt-1 text-lg font-display font-bold text-navy-900;
+  }
+  .bof-card .account-summary .summary-item .value.highlight {
+    @apply text-cyan-700;
+  }
+
+  /* ---- Status card (e.g. latest request preview) ---- */
+  .bof-card .status-card {
+    @apply mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4;
+  }
+  .bof-card .status-card .hint { @apply mb-1; }
+
+  /* ---- "no data" empty state ---- */
+  .bof-card .no-data {
+    @apply text-sm text-slate-500 italic py-8 text-center;
+  }
+
+  /* ---- Transfer-specific helpers ---- */
+  .bof-card .transfer-from-row { @apply mb-3; }
+  .bof-card .transfer-selected-balance {
+    @apply mt-2 text-sm text-slate-600;
+  }
+
+  /* ---- Compliance / Profile / OTP notices ---- */
+  .bof-card .otp-notice {
+    @apply mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-mono text-amber-800;
+  }
+
+  /* ---- Misc ---- */
+  .bof-card .link-btn {
+    @apply text-cyan-700 font-semibold hover:text-cyan-900 underline-offset-2 hover:underline;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+}
