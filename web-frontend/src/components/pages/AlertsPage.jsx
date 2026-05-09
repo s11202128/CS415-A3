@@ -60,7 +60,7 @@ export default function AlertsPage({ notifications = [] }) {
           </h3>
         </div>
         {items.length === 0 ? (
-          <p className="text-sm text-slate-500 py-12 text-center">You're all caught up.</p>
+          <p className="text-sm text-slate-600 py-12 text-center">You're all caught up.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
             {items.map((n) => (
@@ -74,7 +74,7 @@ export default function AlertsPage({ notifications = [] }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-semibold text-navy-900 truncate">{n.title}</p>
-                    <span className="text-[11px] text-slate-500 shrink-0">{n.time}</span>
+                    <span className="text-[11px] text-slate-600 shrink-0">{n.time}</span>
                   </div>
                   <p className="text-sm text-slate-600">{n.body}</p>
                 </div>

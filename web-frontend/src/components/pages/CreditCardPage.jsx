@@ -102,7 +102,7 @@ export default function CreditCardPage({ currentUser }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-navy-900">Pay Now</p>
-              <p className="text-xs text-slate-500">Pay your balance from any account</p>
+              <p className="text-xs text-slate-600">Pay your balance from any account</p>
             </div>
             <div className="grid place-items-center h-10 w-10 rounded-xl bg-emerald-500 text-white group-hover:scale-105 transition-transform">
               <ArrowRight className="h-5 w-5" />
@@ -117,7 +117,7 @@ export default function CreditCardPage({ currentUser }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-navy-900">{frozen ? "Unfreeze Card" : "Freeze Card"}</p>
-              <p className="text-xs text-slate-500">{frozen ? "Re-enable spending" : "Temporarily block all transactions"}</p>
+              <p className="text-xs text-slate-600">{frozen ? "Re-enable spending" : "Temporarily block all transactions"}</p>
             </div>
             <div className={["grid place-items-center h-10 w-10 rounded-xl text-white group-hover:scale-105 transition-transform", frozen ? "bg-rose-500" : "bg-cyan-500"].join(" ")}>
               {frozen ? <Flame className="h-5 w-5" /> : <Snowflake className="h-5 w-5" />}
@@ -129,7 +129,7 @@ export default function CreditCardPage({ currentUser }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-navy-900">Download Statement</p>
-              <p className="text-xs text-slate-500">PDF for the current cycle</p>
+              <p className="text-xs text-slate-600">PDF for the current cycle</p>
             </div>
             <div className="grid place-items-center h-10 w-10 rounded-xl bg-navy-900 text-white group-hover:scale-105 transition-transform">
               <Download className="h-5 w-5" />
@@ -143,7 +143,7 @@ export default function CreditCardPage({ currentUser }) {
         <div className="bof-card">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-bold text-navy-900">Spending — last 14 days</h3>
-            <span className="text-xs text-slate-500">Daily totals</span>
+            <span className="text-xs text-slate-600">Daily totals</span>
           </div>
           <div className="h-48">
             <ResponsiveContainer>
@@ -159,7 +159,7 @@ export default function CreditCardPage({ currentUser }) {
         <div className="bof-card">
           <h3 className="font-bold text-navy-900 mb-2">Recent Purchases</h3>
           {purchases.length === 0 ? (
-            <p className="text-sm text-slate-500 py-6 text-center">No purchases yet.</p>
+            <p className="text-sm text-slate-600 py-6 text-center">No purchases yet.</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {purchases.map((p, i) => (
@@ -171,7 +171,7 @@ export default function CreditCardPage({ currentUser }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-navy-900 truncate">{p.merchant}</p>
-                    <p className="text-xs text-slate-500">{p.date}</p>
+                    <p className="text-xs text-slate-600">{p.date}</p>
                   </div>
                   <p className="text-sm font-semibold text-rose-600">−{FJD(p.amount)}</p>
                 </li>

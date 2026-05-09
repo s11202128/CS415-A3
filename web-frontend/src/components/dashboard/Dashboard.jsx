@@ -168,7 +168,7 @@ export default function Dashboard({
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-navy-900">My Accounts</h2>
-          <button onClick={() => onSelectTab?.("Accounts")} className="text-sm font-semibold text-cyan-700 hover:underline">View all →</button>
+          <button onClick={() => onSelectTab?.("Accounts")} className="text-sm font-bold text-navy-900 underline decoration-cyan-500 decoration-2 underline-offset-4 hover:decoration-cyan-700">View all →</button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {(accounts.length ? accounts.slice(0, 3) : []).map((acc, i) => (
@@ -264,7 +264,7 @@ export default function Dashboard({
         <div className="bof-card lg:col-span-2">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-bold text-navy-900">Income vs. Expenses</h3>
-            <span className="text-xs text-slate-500">Last 6 months</span>
+            <span className="text-xs text-slate-600">Last 6 months</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer>
@@ -286,7 +286,7 @@ export default function Dashboard({
         <div className="bof-card">
           <h3 className="font-bold text-navy-900 mb-2">Spending Summary</h3>
           {byCategory.length === 0 ? (
-            <div className="h-64 grid place-items-center text-sm text-slate-400">No transactions yet</div>
+            <div className="h-64 grid place-items-center text-sm text-slate-600">No transactions yet</div>
           ) : (
             <div className="h-64">
               <ResponsiveContainer>
@@ -307,15 +307,15 @@ export default function Dashboard({
         <div className="bof-card lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-navy-900">Recent Transactions</h3>
-            <button onClick={() => onSelectTab?.("Statements")} className="text-sm font-semibold text-cyan-700 hover:underline">View statements →</button>
+            <button onClick={() => onSelectTab?.("Statements")} className="text-sm font-bold text-navy-900 underline decoration-cyan-500 decoration-2 underline-offset-4 hover:decoration-cyan-700">View statements →</button>
           </div>
           {recent.length === 0 ? (
-            <p className="text-sm text-slate-500 py-6 text-center">No recent transactions to show.</p>
+            <p className="text-sm text-slate-600 py-6 text-center">No recent transactions to show.</p>
           ) : (
             <div className="overflow-x-auto -mx-2">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500">
+                  <tr className="text-left text-[11px] uppercase tracking-wider text-slate-700">
                     <th className="px-2 py-2">Description</th>
                     <th className="px-2 py-2">Date</th>
                     <th className="px-2 py-2">Type</th>
@@ -339,7 +339,7 @@ export default function Dashboard({
                             </div>
                             <div className="min-w-0">
                               <p className="font-semibold text-navy-900 truncate">{t.description || t.payee || "Transaction"}</p>
-                              <p className="text-xs text-slate-500 truncate">{t.merchant || t.accountNumber || "—"}</p>
+                              <p className="text-xs text-slate-600 truncate">{t.merchant || t.accountNumber || "—"}</p>
                             </div>
                           </div>
                         </td>

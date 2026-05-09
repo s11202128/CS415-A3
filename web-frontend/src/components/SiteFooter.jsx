@@ -87,7 +87,7 @@ export default function SiteFooter({ currentYear }) {
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-white truncate">{t}</p>
-                <p className="text-slate-400 truncate">{s}</p>
+                <p className="text-slate-300 truncate">{s}</p>
               </div>
             </div>
           ))}
@@ -108,7 +108,7 @@ export default function SiteFooter({ currentYear }) {
             </div>
           </div>
 
-          <p className="text-sm text-slate-400 max-w-sm">
+          <p className="text-sm text-slate-300 max-w-sm">
             Premium digital banking for the South Pacific — secure, simple, and built around the moments that matter to you.
           </p>
 
@@ -117,21 +117,21 @@ export default function SiteFooter({ currentYear }) {
               <Phone className="h-4 w-4 mt-0.5 text-cyan-300 shrink-0" />
               <div>
                 <p className="text-white font-semibold">+679 132 888</p>
-                <p className="text-xs text-slate-500">24/7 toll-free in Fiji</p>
+                <p className="text-xs text-slate-300">24/7 toll-free in Fiji</p>
               </div>
             </li>
             <li className="flex items-start gap-3">
               <Mail className="h-4 w-4 mt-0.5 text-cyan-300 shrink-0" />
               <div>
                 <p className="text-white font-semibold">support@bof.fj</p>
-                <p className="text-xs text-slate-500">Reply within 1 business day</p>
+                <p className="text-xs text-slate-300">Reply within 1 business day</p>
               </div>
             </li>
             <li className="flex items-start gap-3">
               <MapPin className="h-4 w-4 mt-0.5 text-cyan-300 shrink-0" />
               <div>
                 <p className="text-white font-semibold">Suva HQ, Fiji</p>
-                <p className="text-xs text-slate-500">30+ branches nationwide</p>
+                <p className="text-xs text-slate-300">30+ branches nationwide</p>
               </div>
             </li>
           </ul>
@@ -141,14 +141,14 @@ export default function SiteFooter({ currentYear }) {
             <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10 px-3 py-2 text-xs font-semibold text-white transition-colors">
               <AppleLogo className="h-4 w-4" />
               <span className="text-left leading-tight">
-                <span className="block text-[9px] uppercase tracking-widest text-slate-400">Download on</span>
+                <span className="block text-[9px] uppercase tracking-widest text-slate-300">Download on</span>
                 App Store
               </span>
             </button>
             <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10 px-3 py-2 text-xs font-semibold text-white transition-colors">
               <Smartphone className="h-4 w-4" />
               <span className="text-left leading-tight">
-                <span className="block text-[9px] uppercase tracking-widest text-slate-400">Get it on</span>
+                <span className="block text-[9px] uppercase tracking-widest text-slate-300">Get it on</span>
                 Google Play
               </span>
             </button>
@@ -165,7 +165,7 @@ export default function SiteFooter({ currentYear }) {
               {sec.links.map((l) => (
                 <li key={l.label}>
                   <a href={l.href}
-                    className="text-slate-400 hover:text-white transition-colors hover:translate-x-0.5 inline-block">
+                    className="text-slate-200 hover:text-white transition-colors hover:translate-x-0.5 inline-block">
                     {l.label}
                   </a>
                 </li>
@@ -179,7 +179,7 @@ export default function SiteFooter({ currentYear }) {
           <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300 mb-4">
             Stay updated
           </h4>
-          <p className="text-xs text-slate-400 mb-3">
+          <p className="text-xs text-slate-300 mb-3">
             Product news, security tips & exclusive offers in your inbox.
           </p>
           <form onSubmit={(e) => e.preventDefault()} className="space-y-2">
@@ -199,16 +199,16 @@ export default function SiteFooter({ currentYear }) {
       {/* Legal bar */}
       <div className="relative border-t border-white/10">
         <div className="mx-auto max-w-[1600px] px-6 lg:px-10 py-5 flex flex-col lg:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-500 text-center lg:text-left">
+          <p className="text-xs text-slate-300 text-center lg:text-left">
             © {year} Bank of Fiji. All rights reserved.{" "}
             <span className="hidden sm:inline">Bank of Fiji is regulated by the Reserve Bank of Fiji.</span>
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs">
-            <a href="#" className="text-slate-400 hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="text-slate-400 hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="text-slate-400 hover:text-white transition-colors">Cookie Settings</a>
-            <a href="#" className="text-slate-400 hover:text-white transition-colors">Security</a>
+            <a href="#" className="text-slate-200 hover:text-white transition-colors">Privacy Policy</a>
+            <a href="#" className="text-slate-200 hover:text-white transition-colors">Terms of Service</a>
+            <a href="#" className="text-slate-200 hover:text-white transition-colors">Cookie Settings</a>
+            <a href="#" className="text-slate-200 hover:text-white transition-colors">Security</a>
           </div>
 
           <div className="flex items-center gap-2">

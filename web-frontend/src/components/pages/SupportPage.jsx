@@ -23,27 +23,27 @@ export default function SupportPage() {
           <div className="grid place-items-center h-12 w-12 rounded-2xl bg-emerald-500 text-white mx-auto mb-3">
             <Phone className="h-6 w-6" />
           </div>
-          <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Call us</p>
+          <p className="text-xs uppercase tracking-widest text-slate-600 font-semibold">Call us</p>
           <p className="mt-1 text-lg font-bold text-navy-900">132 888</p>
-          <p className="text-xs text-slate-500">24/7 · Toll-free in Fiji</p>
+          <p className="text-xs text-slate-600">24/7 · Toll-free in Fiji</p>
         </div>
 
         <div className="bof-card text-center">
           <div className="grid place-items-center h-12 w-12 rounded-2xl bg-cyan-500 text-white mx-auto mb-3">
             <MessageCircle className="h-6 w-6" />
           </div>
-          <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Chat with us</p>
+          <p className="text-xs uppercase tracking-widest text-slate-600 font-semibold">Chat with us</p>
           <p className="mt-1 text-lg font-bold text-navy-900">Live chat</p>
-          <p className="text-xs text-slate-500">Use the chat bubble at the bottom</p>
+          <p className="text-xs text-slate-600">Use the chat bubble at the bottom</p>
         </div>
 
         <div className="bof-card text-center">
           <div className="grid place-items-center h-12 w-12 rounded-2xl bg-navy-900 text-white mx-auto mb-3">
             <Mail className="h-6 w-6" />
           </div>
-          <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Email</p>
+          <p className="text-xs uppercase tracking-widest text-slate-600 font-semibold">Email</p>
           <p className="mt-1 text-lg font-bold text-navy-900">support@bof.fj</p>
-          <p className="text-xs text-slate-500">Response within 1 business day</p>
+          <p className="text-xs text-slate-600">Response within 1 business day</p>
         </div>
       </div>
 

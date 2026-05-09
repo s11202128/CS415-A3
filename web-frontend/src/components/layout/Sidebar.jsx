@@ -135,7 +135,7 @@ export default function Sidebar({
                 <Icon className={["h-5 w-5 shrink-0", isActive && "text-cyan-300"].join(" ")} />
                 {!collapsed && <span className="truncate">{item.label}</span>}
                 {!collapsed && disabled && (
-                  <span className="ml-auto text-[10px] uppercase tracking-wider text-slate-500">soon</span>
+                  <span className="ml-auto text-[10px] uppercase tracking-wider text-slate-300">soon</span>
                 )}
               </button>
             );

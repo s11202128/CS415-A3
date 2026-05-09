@@ -44,7 +44,7 @@ export default function InvestmentsPage() {
             <h3 className="font-bold text-navy-900 flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-cyan-600" /> Portfolio Performance
             </h3>
-            <span className="text-xs text-slate-500">Last 12 months</span>
+            <span className="text-xs text-slate-600">Last 12 months</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer>
@@ -91,7 +91,7 @@ export default function InvestmentsPage() {
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500">
+            <tr className="text-left text-[11px] uppercase tracking-wider text-slate-600">
               <th className="py-2">Product</th>
               <th className="py-2">Allocation</th>
               <th className="py-2 text-right">Value</th>
@@ -109,7 +109,7 @@ export default function InvestmentsPage() {
                       <div className="w-32 h-2 rounded-full bg-slate-100 overflow-hidden">
                         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: COLORS[i % COLORS.length] }} />
                       </div>
-                      <span className="text-xs text-slate-500">{pct.toFixed(1)}%</span>
+                      <span className="text-xs text-slate-600">{pct.toFixed(1)}%</span>
                     </div>
                   </td>
                   <td className="py-3 text-right font-semibold">{FJD(p.value)}</td>
@@ -121,7 +121,7 @@ export default function InvestmentsPage() {
         </table>
       </section>
 
-      <p className="text-xs text-slate-500 text-center">
+      <p className="text-xs text-slate-600 text-center">
         Investments are subject to market risk. Past performance is not indicative of future results.
       </p>
     </div>

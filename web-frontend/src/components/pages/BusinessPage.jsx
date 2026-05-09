@@ -89,7 +89,7 @@ export default function BusinessPage({ accounts = [], transactions = [] }) {
           <h3 className="font-bold text-navy-900 flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-cyan-600" /> Daily Cash Flow
           </h3>
-          <span className="text-xs text-slate-500">Current month</span>
+          <span className="text-xs text-slate-600">Current month</span>
         </div>
         <div className="h-64">
           <ResponsiveContainer>
@@ -122,9 +122,9 @@ export default function BusinessPage({ accounts = [], transactions = [] }) {
             <Users className="h-5 w-5 text-navy-700" />
             <h3 className="font-bold text-navy-900">Payroll</h3>
           </div>
-          <p className="text-xs text-slate-500">Next pay run</p>
+          <p className="text-xs text-slate-600">Next pay run</p>
           <p className="mt-1 text-2xl font-display font-bold text-navy-900">15 days</p>
-          <p className="text-xs text-slate-500 mt-2">Estimated total</p>
+          <p className="text-xs text-slate-600 mt-2">Estimated total</p>
           <p className="text-lg font-semibold text-navy-900">{FJD(0)}</p>
           <button className="bof-btn bof-btn-primary mt-4 w-full">Set up payroll</button>
         </div>
@@ -134,9 +134,9 @@ export default function BusinessPage({ accounts = [], transactions = [] }) {
             <FileSignature className="h-5 w-5 text-cyan-600" />
             <h3 className="font-bold text-navy-900">Invoices</h3>
           </div>
-          <p className="text-xs text-slate-500">Outstanding</p>
+          <p className="text-xs text-slate-600">Outstanding</p>
           <p className="mt-1 text-2xl font-display font-bold text-navy-900">{FJD(0)}</p>
-          <p className="text-xs text-slate-500 mt-2">0 invoices awaiting payment</p>
+          <p className="text-xs text-slate-600 mt-2">0 invoices awaiting payment</p>
           <button className="bof-btn bof-btn-cyan mt-4 w-full">Create invoice</button>
         </div>
 
@@ -145,9 +145,9 @@ export default function BusinessPage({ accounts = [], transactions = [] }) {
             <Receipt className="h-5 w-5 text-amber-600" />
             <h3 className="font-bold text-navy-900">Tax (FRCS)</h3>
           </div>
-          <p className="text-xs text-slate-500">Next VAT return</p>
+          <p className="text-xs text-slate-600">Next VAT return</p>
           <p className="mt-1 text-2xl font-display font-bold text-navy-900">28 days</p>
-          <p className="text-xs text-slate-500 mt-2">Estimated due</p>
+          <p className="text-xs text-slate-600 mt-2">Estimated due</p>
           <p className="text-lg font-semibold text-navy-900">{FJD(0)}</p>
           <button className="bof-btn bof-btn-ghost mt-4 w-full border border-slate-200">Pay tax</button>
         </div>

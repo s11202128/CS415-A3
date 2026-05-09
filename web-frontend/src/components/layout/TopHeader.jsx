@@ -62,7 +62,7 @@ export default function TopHeader({
 
         {/* Greeting (hidden on small) */}
         <div className="hidden md:block min-w-0">
-          <p className="text-[11px] uppercase tracking-widest text-slate-500">
+          <p className="text-[11px] uppercase tracking-widest text-slate-600">
             {now.toLocaleDateString("en-FJ", { weekday: "long", day: "numeric", month: "short" })} ·{" "}
             {now.toLocaleTimeString("en-FJ", { hour: "2-digit", minute: "2-digit" })}
           </p>
@@ -74,7 +74,7 @@ export default function TopHeader({
         {/* Search */}
         <div className="flex-1 max-w-xl ml-auto md:ml-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <input
               type="search"
               placeholder="Search transactions, payees, accounts…"
@@ -151,12 +151,12 @@ export default function TopHeader({
             </div>
             <div className="hidden md:block text-left">
               <p className="text-xs font-semibold text-navy-900 leading-tight">{currentUser?.fullName || "Customer"}</p>
-              <p className="text-[10px] text-slate-500 leading-tight flex items-center gap-1">
+              <p className="text-[10px] text-slate-600 leading-tight flex items-center gap-1">
                 <ShieldCheck className="h-3 w-3 text-emerald-500" />
                 Last login today
               </p>
             </div>
-            <ChevronDown className="hidden md:block h-4 w-4 text-slate-400" />
+            <ChevronDown className="hidden md:block h-4 w-4 text-slate-500" />
           </button>
           <AnimatePresence>
             {showProfile && (
@@ -166,7 +166,7 @@ export default function TopHeader({
               >
                 <div className="px-3 py-2 border-b border-slate-100">
                   <p className="text-sm font-semibold text-navy-900">{currentUser?.fullName}</p>
-                  <p className="text-xs text-slate-500 truncate">{currentUser?.email}</p>
+                  <p className="text-xs text-slate-600 truncate">{currentUser?.email}</p>
                 </div>
                 <button
                   type="button"
