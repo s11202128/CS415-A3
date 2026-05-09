@@ -174,6 +174,12 @@ export const api = {
   updateAdminStatementRequest: (id, body) => request(`/admin/statement-requests/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   getStatementByRequest: (requestId) => request(`/statements/request/${encodeURIComponent(requestId)}`),
   downloadStatementByRequest: (requestId) => requestBlob(`/statements/request/${encodeURIComponent(requestId)}/download`),
+  downloadMyStatement: (body = {}) =>
+    requestBlob("/statement/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
   getNotifications: (customerId) => request(`/notifications/${customerId}`),
   sendNotification: (body) => request("/notifications/send", { method: "POST", body: JSON.stringify(body) }),
   getNotificationHistory: (customerId = null, limit = 200) => {

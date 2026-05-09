@@ -5,9 +5,9 @@ import {
   Award, ArrowRight, Eye, EyeOff,
 } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
+import { api } from "../../api";
 import PageHeader from "../ui/PageHeader";
 import StatCard from "../ui/StatCard";
-import CreditCardPanel from "../CreditCardPanel";
 
 const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -15,8 +15,10 @@ const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractio
  * CreditCardPage — premium credit-card UI with 3D card visual, KPI tiles,
  * spending sparkline and recent purchases.
  */
-export default function CreditCardPage({ currentUser, creditCards = [], onCardsChanged, onSelectTab, onPayNow }) {
+export default function CreditCardPage({ currentUser, creditCards = [], onSelectTab, onPayNow }) {
   const [hide, setHide] = useState(false);
+  const [downloadingStatement, setDownloadingStatement] = useState(false);
+  const [statementError, setStatementError] = useState("");
 
   const primaryCard = Array.isArray(creditCards) && creditCards.length > 0 ? creditCards[0] : null;
   const limit = Number(primaryCard?.creditLimit || 0);
@@ -37,6 +39,30 @@ export default function CreditCardPage({ currentUser, creditCards = [], onCardsC
 
   const purchases = []; // empty until backend feed wired
   const sparkline = Array.from({ length: 14 }, (_, i) => ({ d: i + 1, v: Math.round(Math.random() * 200) }));
+
+  async function handleDownloadStatement() {
+    setStatementError("");
+    setDownloadingStatement(true);
+    try {
+      const { blob, contentDisposition } = await api.downloadMyStatement({});
+      const filenameMatch = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(contentDisposition || "");
+      const encodedName = filenameMatch?.[1] || filenameMatch?.[2] || "bank-statement.pdf";
+      const filename = decodeURIComponent(encodedName);
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setStatementError(err?.message || "Unable to download statement right now.");
+    } finally {
+      setDownloadingStatement(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -121,11 +147,18 @@ export default function CreditCardPage({ currentUser, creditCards = [], onCardsC
           </div>
         </button>
 
-        <button className="bof-card text-left group">
+        <button
+          type="button"
+          onClick={handleDownloadStatement}
+          disabled={downloadingStatement}
+          className="bof-card text-left group disabled:opacity-60 disabled:cursor-not-allowed"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-navy-900">Download Statement</p>
-              <p className="text-xs text-slate-600">PDF for the current cycle</p>
+              <p className="text-xs text-slate-600">
+                {downloadingStatement ? "Preparing PDF..." : "PDF for the current cycle"}
+              </p>
             </div>
             <div className="grid place-items-center h-10 w-10 rounded-xl bg-navy-900 text-white group-hover:scale-105 transition-transform">
               <Download className="h-5 w-5" />
@@ -133,6 +166,10 @@ export default function CreditCardPage({ currentUser, creditCards = [], onCardsC
           </div>
         </button>
       </section>
+
+      {statementError && (
+        <p className="text-sm text-rose-600">{statementError}</p>
+      )}
 
       {/* Spending analytics */}
       <section className="grid lg:grid-cols-[2fr,1fr] gap-4">
@@ -177,15 +214,6 @@ export default function CreditCardPage({ currentUser, creditCards = [], onCardsC
         </div>
       </section>
 
-      {/* Existing functional credit card panel */}
-      <section className="bof-card">
-        <h3 className="font-bold text-navy-900 mb-2">Card Operations</h3>
-        <p className="text-sm text-slate-600 mb-4">
-          Create your card, charge purchases, view your summary and make payments via the
-        <CreditCardPanel currentUser={currentUser} onCardsChanged={onCardsChanged} />
-        </p>
-        <CreditCardPanel currentUser={currentUser} />
-      </section>
     </div>
   );
 }
