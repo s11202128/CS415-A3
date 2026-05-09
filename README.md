@@ -86,3 +86,28 @@ Backend runs on `http://localhost:4000`.
 - Web React frontend has been removed from this repository by design.
 - Architecture target is mobile presentation + backend service/data layers.
 - Interest computation is simplified annual prototype logic.
+
+
+## Testing
+
+Each module ships its own automated test suite (JUnit on Android, `node:test` on the backend, Vitest on the web frontend).
+
+```powershell
+# Backend (node:test) - runs all backend/src/**/__tests__/*.test.js
+cd backend
+npm test
+
+# Web frontend (Vitest + React Testing Library)
+cd web-frontend
+npm install
+npm test
+
+# Android JVM unit tests (JUnit 4 + Mockito-Kotlin + coroutines-test)
+cd mobile-android
+./gradlew :app:testDebugUnitTest
+# HTML report: app/build/reports/tests/testDebugUnitTest/index.html
+
+# Android UI/instrumentation tests (Compose ui-test, requires emulator/device)
+cd mobile-android
+./gradlew :app:connectedDebugAndroidTest
+```

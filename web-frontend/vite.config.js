@@ -5,13 +5,14 @@ export default defineConfig({
   plugins: [react()],
   esbuild: {
     loader: "jsx",
-    include: /src\/.*\.js$/,
+    include: /src\/.*\.(js|jsx)$/,
     exclude: [],
   },
   optimizeDeps: {
     esbuildOptions: {
       loader: {
         ".js": "jsx",
+        ".jsx": "jsx",
       },
     },
   },
@@ -23,5 +24,12 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["./src/test/setup.js"],
+    css: false,
+    include: ["src/**/__tests__/**/*.{test,spec}.{js,jsx}"],
   },
 });

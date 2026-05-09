@@ -15,14 +15,31 @@ import BillPaymentsTab from "./components/tabs/BillPaymentsTab";
 import StatementsTab from "./components/tabs/StatementsTab";
 import LoansTab from "./components/tabs/LoansTab";
 import ProfileTab from "./components/tabs/ProfileTab";
-import AdminLockScreen from "./components/tabs/AdminLockScreen";
+import AdminLockScreen from "./components/layout/AdminLockScreen";
 import AccountManager from "./components/AccountManager";
 import CreditCardPanel from "./components/CreditCardPanel";
+// New premium UI shell (Phase 1 + 2)
+import AppLayout from "./components/layout/AppLayout";
+import AccountsPage from "./components/pages/AccountsPage";
+import BusinessPage from "./components/pages/BusinessPage";
+import CreditCardPage from "./components/pages/CreditCardPage";
+import InvestmentsPage from "./components/pages/InvestmentsPage";
+import AlertsPage from "./components/pages/AlertsPage";
+import SupportPage from "./components/pages/SupportPage";
+import {
+  TransfersPage,
+  BillPaymentsPage,
+  StatementsPage,
+  LoansPage,
+  ProfilePage,
+} from "./components/pages/WrappedPages";
+import Dashboard from "./components/dashboard/Dashboard";
 // Chatbot widget – additive, shown on every page
 import ChatWidget from "./components/chatbot/ChatWidget";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Overview");
+  const [businessSubTab, setBusinessSubTab] = useState("accounts");
   const [showAdmin, setShowAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -713,247 +730,209 @@ export default function App() {
 
   // ── Admin page view ───────────────────────────────────────────────────────
   if (isAdminUser) {
-    return (
-      <div className="app-shell">
-        <header className="hero">
-          <div className="hero-row">
-            <BankBrand
-              className="hero-brand"
-              compact
-              eyebrow="Administration"
-              title="Bank of Fiji"
-              subtitle="Admin dashboard with live monitoring and controls."
-            />
-            {currentUser && (
-              <div className="hero-user">
-                <span>Welcome, <strong>{currentUser.fullName}</strong></span>
-                <button className="logout-btn" onClick={onLogout}>Logout</button>
-              </div>
-            )}
-          </div>
-        </header>
-        <AdminPage
-          authToken={authToken}
-          customers={customers}
-          accounts={accounts}
-          transactions={adminTransactions}
-          scheduledBills={scheduledBills}
-          loanApplications={loanApplications}
-          summaries={summaries}
-          selectedAccountForTx={selectedAccountForTx}
-          setSelectedAccountForTx={setSelectedAccountForTx}
-          adminAccountForm={adminAccountForm}
-          setAdminAccountForm={setAdminAccountForm}
-          onCreateAdminAccount={onCreateAdminAccount}
-          adminAccountMessage={adminAccountMessage}
-          adminDepositForm={adminDepositForm}
-          setAdminDepositForm={setAdminDepositForm}
-          onAdminDeposit={onAdminDeposit}
-          adminDepositMessage={adminDepositMessage}
-          setAdminDepositMessage={setAdminDepositMessage}
-          adminMessage={adminMessage}
-          onAdminUpdateCustomer={onAdminUpdateCustomer}
-          onAdminUpdateAccount={onAdminUpdateAccount}
-          onAdminFreezeAccount={onAdminFreezeAccount}
-          onAdminUpdateLoanStatus={onAdminUpdateLoanStatus}
-          adminTransferLimit={adminTransferLimit}
-          setAdminTransferLimit={setAdminTransferLimit}
-          onAdminUpdateTransferLimit={onAdminUpdateTransferLimit}
-          onAdminReverseTransaction={onAdminReverseTransaction}
-          adminLoginLogs={adminLoginLogs}
-          adminNotificationLogs={adminNotificationLogs}
-          adminNotificationPreferences={adminNotificationPreferences}
-          onAdminToggleNotificationPreference={onAdminToggleNotificationPreference}
-          adminStatementRequests={adminStatementRequests}
-          onAdminUpdateStatementRequest={onAdminUpdateStatementRequest}
-          adminReport={adminReport}
-          adminLastUpdated={adminLastUpdated}
-          interestRate={interestRate}
-          setInterestRate={setInterestRate}
-          onUpdateRate={onUpdateRate}
-          summaryYear={summaryYear}
-          setSummaryYear={setSummaryYear}
-          onGenerateSummaries={onGenerateSummaries}
-          complianceMessage={complianceMessage}
+    if (showAdmin && !adminAccessGranted) {
+      return (
+        <AdminLockScreen
+          adminAuthForm={adminAuthForm}
+          setAdminAuthForm={setAdminAuthForm}
+          onVerifyAdminAccess={onVerifyAdminAccess}
+          adminAuthMessage={adminAuthMessage}
         />
-        <SiteFooter currentYear={currentYear} />
-      </div>
+      );
+    }
+    return (
+      <AdminPage
+        authToken={authToken}
+        currentUser={currentUser}
+        notificationsCount={notifications?.length || 0}
+        onLogout={onLogout}
+        customers={customers}
+        accounts={accounts}
+        transactions={adminTransactions}
+        scheduledBills={scheduledBills}
+        loanApplications={loanApplications}
+        summaries={summaries}
+        selectedAccountForTx={selectedAccountForTx}
+        setSelectedAccountForTx={setSelectedAccountForTx}
+        adminAccountForm={adminAccountForm}
+        setAdminAccountForm={setAdminAccountForm}
+        onCreateAdminAccount={onCreateAdminAccount}
+        adminAccountMessage={adminAccountMessage}
+        adminDepositForm={adminDepositForm}
+        setAdminDepositForm={setAdminDepositForm}
+        onAdminDeposit={onAdminDeposit}
+        adminDepositMessage={adminDepositMessage}
+        setAdminDepositMessage={setAdminDepositMessage}
+        adminMessage={adminMessage}
+        onAdminUpdateCustomer={onAdminUpdateCustomer}
+        onAdminUpdateAccount={onAdminUpdateAccount}
+        onAdminFreezeAccount={onAdminFreezeAccount}
+        onAdminUpdateLoanStatus={onAdminUpdateLoanStatus}
+        adminTransferLimit={adminTransferLimit}
+        setAdminTransferLimit={setAdminTransferLimit}
+        onAdminUpdateTransferLimit={onAdminUpdateTransferLimit}
+        onAdminReverseTransaction={onAdminReverseTransaction}
+        adminLoginLogs={adminLoginLogs}
+        adminNotificationLogs={adminNotificationLogs}
+        adminNotificationPreferences={adminNotificationPreferences}
+        onAdminToggleNotificationPreference={onAdminToggleNotificationPreference}
+        adminStatementRequests={adminStatementRequests}
+        onAdminUpdateStatementRequest={onAdminUpdateStatementRequest}
+        adminReport={adminReport}
+        adminLastUpdated={adminLastUpdated}
+        interestRate={interestRate}
+        setInterestRate={setInterestRate}
+        onUpdateRate={onUpdateRate}
+        summaryYear={summaryYear}
+        setSummaryYear={setSummaryYear}
+        onGenerateSummaries={onGenerateSummaries}
+        complianceMessage={complianceMessage}
+      />
     );
   }
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="app-shell">
-      <header className="hero">
-        <div className="hero-row">
-          <BankBrand
-            className="hero-brand"
-            compact
-            eyebrow="Online Banking"
-            title="Bank of Fiji"
-            subtitle="Home dashboard"
+    <>
+      <AppLayout
+        activeTab={activeTab}
+        businessSubTab={businessSubTab}
+        onSelectTab={setActiveTab}
+        onSelectBusinessSub={setBusinessSubTab}
+        currentUser={currentUser}
+        isAdminUser={isAdminUser}
+        onLogout={onLogout}
+        onOpenAdmin={() => { setShowAdmin(true); setAdminAuthMessage(""); }}
+        notificationsCount={notifications?.length || 0}
+      >
+        {error && (
+          <p className="status error" style={{ marginBottom: 16 }}>
+            <strong>Error:</strong> {error}
+          </p>
+        )}
+        {loading && !error && <p className="status">Loading data...</p>}
+        {!currentUser && !loading && !error && (
+          <p className="status">Please wait while we load your account information...</p>
+        )}
+
+        {currentUser && !loading && activeTab === "Overview" && (
+          <Dashboard
+            currentUser={currentUser}
+            accounts={accounts}
+            transactions={customerTransactions}
+            lastUpdatedAt={lastUpdatedAt}
+            isRefreshing={loading}
+            onRefresh={loadInitialData}
+            onSelectTab={setActiveTab}
+            onSelectBusinessSub={setBusinessSubTab}
           />
-          {currentUser && (
-            <div className="hero-user">
-              <span>Welcome, <strong>{currentUser.fullName}</strong></span>
-              {!isAdminUser && <button className="admin-btn" onClick={() => { setShowAdmin(true); setAdminAuthMessage(""); }}>Admin</button>}
-              <button className="logout-btn" onClick={onLogout}>Logout</button>
-            </div>
-          )}
-        </div>
-      </header>
+        )}
 
-      <div className="workspace-layout">
-        <aside className="left-tabs">
-          {currentUser ? (
-            <nav className="tabs">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  className={tab === activeTab ? "tab active" : "tab"}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </nav>
-          ) : (
-            <p className="status">Loading...</p>
-          )}
-        </aside>
+        {!loading && currentUser && activeTab === "Accounts" && (
+          <AccountsPage
+            accounts={accounts}
+            currentUser={currentUser}
+            accountMessage={accountMessage}
+            setAccountMessage={setAccountMessage}
+          />
+        )}
 
-        <section className="tab-content">
-          {/* Manual refresh button for customers only */}
-          {currentUser && !isAdminUser && (
-            <button className="refresh-btn" style={{ marginBottom: 16 }} onClick={() => loadInitialData()}>
-              Refresh
-            </button>
-          )}
-          {error && <p className="status error"><strong>Error:</strong> {error}</p>}
-          {loading && !error && <p className="status">Loading data...</p>}
-          {!currentUser && !loading && !error && (
-            <p className="status">Please wait while we load your account information...</p>
-          )}
-          
-          {/* Debug info - remove after testing */}
-          {!currentUser && !error && (
-            <div style={{padding: '20px', color: '#999', fontSize: '12px', borderTop: '1px solid #eee', marginTop: '20px'}}>
-              <p>Debug - authToken: {authToken ? '✓' : '✗'} | currentUser: {currentUser ? '✓' : '✗'} | loading: {loading ? '✓' : '✗'}</p>
-            </div>
-          )}
+        {!loading && currentUser && activeTab === "Transfers" && (
+          <TransfersPage
+            accounts={accounts}
+            transferForm={transferForm}
+            setTransferForm={setTransferForm}
+            onInitiateTransfer={onInitiateTransfer}
+            pendingTransfer={pendingTransfer}
+            setPendingTransfer={setPendingTransfer}
+            onVerifyTransfer={onVerifyTransfer}
+            transferMessage={transferMessage}
+            setTransferMessage={setTransferMessage}
+          />
+        )}
 
-          {currentUser && !loading && activeTab === "Overview" && (
-            <HomePage
-              totalBalance={accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0)}
-              currentUser={currentUser}
-              lastUpdatedAt={lastUpdatedAt}
-              onRefreshOverview={loadInitialData}
-              isRefreshing={loading}
-              accounts={accounts}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Bill Payments" && (
+          <BillPaymentsPage
+            accounts={accounts}
+            manualBillForm={manualBillForm}
+            setManualBillForm={setManualBillForm}
+            onManualBill={onManualBill}
+            scheduleBillForm={scheduleBillForm}
+            setScheduleBillForm={setScheduleBillForm}
+            onScheduleBill={onScheduleBill}
+            billHistory={billHistory}
+            runScheduledBill={runScheduledBill}
+            billMessage={billMessage}
+          />
+        )}
 
-          {!loading && currentUser && activeTab === "Accounts" && (
-            <AccountsTab
-              accounts={accounts}
-              currentUser={currentUser}
-              accountMessage={accountMessage}
-              setAccountMessage={setAccountMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Statements" && (
+          <StatementsPage
+            accounts={accounts}
+            transactions={customerTransactions}
+            customers={customers}
+            statementAccount={statementAccount}
+            setStatementAccount={setStatementAccount}
+            statementRows={statementRows}
+            statementRequested={statementRequested}
+            statementRequests={statementRequests}
+            statementMessage={statementMessage}
+            setStatementMessage={setStatementMessage}
+            currentUser={currentUser}
+            fetchStatement={fetchStatement}
+            onSubmitStatementRequest={onSubmitStatementRequest}
+            onDownloadStatement={onDownloadStatement}
+            notificationCustomer={notificationCustomer}
+            setNotificationCustomer={setNotificationCustomer}
+            notifications={notifications}
+          />
+        )}
 
-          {!loading && currentUser && activeTab === "Transfers" && (
-            <TransfersTab
-              accounts={accounts}
-              transferForm={transferForm}
-              setTransferForm={setTransferForm}
-              onInitiateTransfer={onInitiateTransfer}
-              pendingTransfer={pendingTransfer}
-              setPendingTransfer={setPendingTransfer}
-              onVerifyTransfer={onVerifyTransfer}
-              transferMessage={transferMessage}
-              setTransferMessage={setTransferMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Loans" && (
+          <LoansPage
+            customers={customers}
+            customerMap={customerMap}
+            loanProducts={loanProducts}
+            loanApplications={loanApplications}
+            loanForm={loanForm}
+            setLoanForm={setLoanForm}
+            onSubmitLoan={onSubmitLoan}
+            loanMessage={loanMessage}
+            setLoanMessage={setLoanMessage}
+          />
+        )}
 
-          {!loading && currentUser && activeTab === "Bill Payments" && (
-            <BillPaymentsTab
-              accounts={accounts}
-              manualBillForm={manualBillForm}
-              setManualBillForm={setManualBillForm}
-              onManualBill={onManualBill}
-              scheduleBillForm={scheduleBillForm}
-              setScheduleBillForm={setScheduleBillForm}
-              onScheduleBill={onScheduleBill}
-              billHistory={billHistory}
-              runScheduledBill={runScheduledBill}
-              billMessage={billMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Business" && businessSubTab === "accounts" && (
+          <BusinessPage accounts={accounts} transactions={customerTransactions} />
+        )}
 
-          {!loading && currentUser && activeTab === "Statements" && (
-            <StatementsTab
-              accounts={accounts}
-              transactions={customerTransactions}
-              customers={customers}
-              statementAccount={statementAccount}
-              setStatementAccount={setStatementAccount}
-              statementRows={statementRows}
-              statementRequested={statementRequested}
-              statementRequests={statementRequests}
-              statementMessage={statementMessage}
-              setStatementMessage={setStatementMessage}
-              currentUser={currentUser}
-              fetchStatement={fetchStatement}
-              onSubmitStatementRequest={onSubmitStatementRequest}
-              onDownloadStatement={onDownloadStatement}
-              notificationCustomer={notificationCustomer}
-              setNotificationCustomer={setNotificationCustomer}
-              notifications={notifications}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Business" && businessSubTab === "cards" && (
+          <CreditCardPage currentUser={currentUser} />
+        )}
 
-          {!loading && currentUser && activeTab === "Loans" && (
-            <LoansTab
-              customers={customers}
-              customerMap={customerMap}
-              loanProducts={loanProducts}
-              loanApplications={loanApplications}
-              loanForm={loanForm}
-              setLoanForm={setLoanForm}
-              onSubmitLoan={onSubmitLoan}
-              loanMessage={loanMessage}
-              setLoanMessage={setLoanMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Investments" && (
+          <InvestmentsPage />
+        )}
 
-          {!loading && currentUser && activeTab === "Business" && (
-            <section className="account-lab" style={{ display: "grid", gap: 16 }}>
-              <h2>Business</h2>
-              <p style={{ color: "#555", marginTop: -8 }}>
-                Try out the new account-type business layer (Access / Savings / Business)
-                and the optional standalone Credit Card product. These are kept
-                separate from your existing bank accounts.
-              </p>
-              <AccountManager />
-              <CreditCardPanel />
-            </section>
-          )}
+        {!loading && currentUser && activeTab === "Alerts" && (
+          <AlertsPage notifications={notifications} />
+        )}
 
-          {!loading && currentUser && activeTab === "Profile" && (
-            <ProfileTab
-              profileForm={profileForm}
-              setProfileForm={setProfileForm}
-              onUpdateProfile={onUpdateProfile}
-              profileMessage={profileMessage}
-            />
-          )}
+        {!loading && currentUser && activeTab === "Support" && (
+          <SupportPage />
+        )}
 
-        </section>
-      </div>
+        {!loading && currentUser && activeTab === "Profile" && (
+          <ProfilePage
+            profileForm={profileForm}
+            setProfileForm={setProfileForm}
+            onUpdateProfile={onUpdateProfile}
+            profileMessage={profileMessage}
+          />
+        )}
+      </AppLayout>
 
-      <SiteFooter currentYear={currentYear} />
       <ChatWidget currentUser={currentUser} authToken={authToken} />
-    </div>
+    </>
   );
 }

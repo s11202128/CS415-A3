@@ -1,4 +1,40 @@
 import { useState } from "react";
+import DataTable, { StatusPill } from "../ui/DataTable";
+
+function ComplianceSummariesTable({ summaries = [] }) {
+  const columns = [
+    { key: "accountId", header: "Account ID",
+      cell: (r) => <span className="font-mono text-xs text-navy-900">{r.accountId}</span> },
+    { key: "customerName", header: "Customer Name",
+      cell: (r) => <span className="font-semibold text-navy-900">{r.customerName}</span> },
+    { key: "year", header: "Year", align: "right", width: "80px" },
+    { key: "grossInterest", header: "Gross Interest", align: "right",
+      accessor: (r) => Number(r.grossInterest || 0),
+      cell: (r) => <span className="font-bold tabular-nums text-navy-900">FJD {Number(r.grossInterest || 0).toFixed(2)}</span> },
+    { key: "withholdingTax", header: "Withholding (15%)", align: "right",
+      accessor: (r) => Number(r.withholdingTax || 0),
+      cell: (r) => <span className="font-bold tabular-nums text-amber-700">FJD {Number(r.withholdingTax || 0).toFixed(2)}</span> },
+    { key: "netInterest", header: "Net Interest", align: "right",
+      accessor: (r) => Number(r.netInterest || 0),
+      cell: (r) => <span className="font-bold tabular-nums text-emerald-700">FJD {Number(r.netInterest || 0).toFixed(2)}</span> },
+    { key: "status", header: "Status",
+      cell: (r) => <StatusPill tone="success">{r.status === "submitted_to_frcs" ? "✓ Submitted" : r.status}</StatusPill> },
+    { key: "submittedAt", header: "Submitted",
+      accessor: (r) => r.submittedAt,
+      cell: (r) => <span className="text-slate-600">{new Date(r.submittedAt).toLocaleDateString()}</span> },
+  ];
+  return (
+    <DataTable
+      title="Tax Summaries"
+      subtitle={`${summaries.length} records · withholding @ 15% applied to non-residents`}
+      columns={columns}
+      rows={summaries}
+      searchPlaceholder="Search by customer, account, year…"
+      defaultSort={{ key: "submittedAt", dir: "desc" }}
+      emptyText='Generate tax reports first to see summaries here.'
+    />
+  );
+}
 
 export default function ComplianceTab({
   interestRate,
@@ -129,46 +165,7 @@ export default function ComplianceTab({
           {activeSection === "Tax Table" && (
             <>
               <h2>📊 Interest Summaries & Tax Reports</h2>
-        {summaries.length === 0 ? (
-          <div className="no-data">
-            No summaries generated yet. Click "Generate + Submit to FRCS" to create year-end interest reports.
-          </div>
-        ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Account ID</th>
-                  <th>Customer Name</th>
-                  <th>Year</th>
-                  <th>Gross Interest</th>
-                  <th>Withholding Tax (15%)</th>
-                  <th>Net Interest</th>
-                  <th>Status</th>
-                  <th>Submitted Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summaries.map((s) => (
-                  <tr key={s.id} className="summary-row">
-                    <td className="monospace">{s.accountId}</td>
-                    <td className="customer-name">{s.customerName}</td>
-                    <td>{s.year}</td>
-                    <td className="amount">FJD {s.grossInterest.toFixed(2)}</td>
-                    <td className="amount warning">FJD {s.withholdingTax.toFixed(2)}</td>
-                    <td className="amount success">FJD {s.netInterest.toFixed(2)}</td>
-                    <td>
-                      <span className="status-badge status-submitted">
-                        {s.status === "submitted_to_frcs" ? "✓ Submitted" : s.status}
-                      </span>
-                    </td>
-                    <td className="small">{new Date(s.submittedAt).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              <ComplianceSummariesTable summaries={summaries} />
             </>
           )}
 

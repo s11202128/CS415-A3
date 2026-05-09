@@ -10,7 +10,7 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "verify:relationships": "node src/verify-relationships.js",
-    "test": "node --test src/models/business/__tests__/accounts.test.js src/models/business/reports/__tests__/netIncomeReport.test.js"
+    "test": "node --test \"src/**/__tests__/*.test.js\""
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
