@@ -6,6 +6,7 @@ import AdminDepositsTab from "./admin/AdminDepositsTab";
 import AdminLoansTab from "./admin/AdminLoansTab";
 import AdminMonitoringTab from "./admin/AdminMonitoringTab";
 import AdminAccountLabTab from "./admin/AdminAccountLabTab";
+import AdminCreditCardsTab from "./admin/AdminCreditCardsTab";
 import AdminNetIncomeTab from "./admin/AdminNetIncomeTab";
 import AdminChatbotTab from "./admin/AdminChatbotTab";
 import ComplianceTab from "./tabs/ComplianceTab";
@@ -14,16 +15,17 @@ import PageHeader from "./ui/PageHeader";
 import { ADMIN_NAV_ITEMS } from "./layout/adminNavItems";
 
 const SECTION_META = {
-  Overview:     { eyebrow: "Operations",  description: "Live KPIs, deposits, and customer activity at a glance." },
-  Customers:    { eyebrow: "Directory",   description: "Search, edit, and manage every customer record." },
-  Accounts:     { eyebrow: "Accounts",    description: "Open, freeze, and update customer accounts." },
-  Deposits:     { eyebrow: "Cash Ops",    description: "Post manual deposits and review balance impacts." },
-  Loans:        { eyebrow: "Lending",     description: "Approve, reject, or update loan applications." },
-  Business:     { eyebrow: "Business",    description: "Tools for the business banking workspace." },
-  "Net Income": { eyebrow: "Finance",     description: "Year-over-year net income and revenue summary." },
-  Chatbot:      { eyebrow: "Support",     description: "Manage the AI assistant configuration and history." },
-  Monitoring:   { eyebrow: "Compliance",  description: "Transaction logs, transfer limits, and notification controls." },
-  Compliance:   { eyebrow: "Governance",  description: "Interest rates, year-end summaries, and policy controls." },
+  Overview:       { eyebrow: "Operations",  description: "Live KPIs, deposits, and customer activity at a glance." },
+  Customers:      { eyebrow: "Directory",   description: "Search, edit, and manage every customer record." },
+  Accounts:       { eyebrow: "Accounts",    description: "Open, freeze, and update customer accounts." },
+  Deposits:       { eyebrow: "Cash Ops",    description: "Post manual deposits and review balance impacts." },
+  Loans:          { eyebrow: "Lending",     description: "Approve, reject, or update loan applications." },
+  "Credit Cards": { eyebrow: "Cards",       description: "Issue, edit, and close customer credit cards." },
+  Business:       { eyebrow: "Business",    description: "Tools for the business banking workspace." },
+  "Net Income":   { eyebrow: "Finance",     description: "Year-over-year net income and revenue summary." },
+  Chatbot:        { eyebrow: "Support",     description: "Manage the AI assistant configuration and history." },
+  Monitoring:     { eyebrow: "Compliance",  description: "Transaction logs, transfer limits, and notification controls." },
+  Compliance:     { eyebrow: "Governance",  description: "Interest rates, year-end summaries, and policy controls." },
 };
 
 export default function AdminPage({
@@ -138,6 +140,9 @@ export default function AdminPage({
           />
         )}
         {activeSection === "Business" && <AdminAccountLabTab />}
+        {activeSection === "Credit Cards" && (
+          <AdminCreditCardsTab customers={customers} />
+        )}
         {activeSection === "Net Income" && <AdminNetIncomeTab authToken={authToken} />}
         {activeSection === "Chatbot" && <AdminChatbotTab authToken={authToken} />}
         {activeSection === "Monitoring" && (

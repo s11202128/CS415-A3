@@ -9,6 +9,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from "recharts";
+import AccountCardsRow from "../account/AccountCardsRow";
 
 const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const mask = (s, hidden) => (hidden ? "•••• ••••" : s);
@@ -98,6 +99,9 @@ export default function Dashboard({
 
   return (
     <div className="space-y-6">
+      {/* ===== My Accounts switcher ===== */}
+      <AccountCardsRow />
+
       {/* ===== Hero / Balance Summary ===== */}
       <motion.section
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}

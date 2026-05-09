@@ -36,6 +36,12 @@ const BusinessLayerCard = sequelize.define(
       allowNull: true,
       field: "statement_due",
     },
+    frozen: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: "frozen",
+    },
   },
   {
     tableName: "business_layer_cards",

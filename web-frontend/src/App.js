@@ -4,6 +4,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useAdminPoll } from "./hooks/useAdminPoll";
 import { filterDataByScope } from "./utils/dataFilters";
 import { tabs } from "./constants/tabs";
+import { AccountProvider } from "./context/AccountContext";
 import AuthPage from "./components/AuthPage";
 import BankBrand from "./components/BankBrand";
 import HomePage from "./components/HomePage";
@@ -78,10 +79,12 @@ export default function App() {
   const [transferForm, setTransferForm] = useState({ fromAccountId: "", toAccountNumber: "", amount: "", description: "" });
   const [transferMessage, setTransferMessage] = useState("");
   const [pendingTransfer, setPendingTransfer] = useState({ transferId: "", otp: "" });
+  const [transferStartOption, setTransferStartOption] = useState("");
 
-  const [manualBillForm, setManualBillForm] = useState({ accountId: "", payee: "", amount: "" });
-  const [scheduleBillForm, setScheduleBillForm] = useState({ accountId: "", payee: "", amount: "", scheduledDate: "" });
+  const [manualBillForm, setManualBillForm] = useState({ accountId: "", payee: "", amount: "", paymentMethod: "account", paymentSourceId: "" });
+  const [scheduleBillForm, setScheduleBillForm] = useState({ accountId: "", payee: "", amount: "", scheduledDate: "", paymentMethod: "account", paymentSourceId: "" });
   const [billMessage, setBillMessage] = useState("");
+  const [creditCards, setCreditCards] = useState([]);
 
   const [loanForm, setLoanForm] = useState({
     customerId: "",
@@ -177,6 +180,7 @@ export default function App() {
         api.getInterestRate(),
         hasAdminScopeForFetch ? api.getSummaries() : Promise.resolve([]),
         api.getStatementRequests(),
+        api.getMyCreditCards(),
       ]);
       const valueOr = (idx, fallback) => (settled[idx].status === "fulfilled" ? settled[idx].value : fallback);
       const customerRows = valueOr(0, []);
@@ -188,6 +192,7 @@ export default function App() {
       const rate = valueOr(6, { reserveBankMinSavingsInterestRate: 0 });
       const sumRows = valueOr(7, []);
       const statementRequestRows = valueOr(8, []);
+      const creditCardRows = valueOr(9, { items: [] });
       // Log non-fatal failures without showing global error banner
       settled.forEach((r, i) => {
         if (r.status === "rejected") {
@@ -209,6 +214,23 @@ export default function App() {
         { hasAdminScope, activeCustomerId: currentUser?.customerId }
       );
 
+      const preferredCustomerIds = [
+        String(currentUser?.customerId || ""),
+        String(currentUser?.userId || ""),
+        ...visibleAccounts.map((a) => String(a.customerId || "")),
+      ].filter(Boolean);
+
+      let resolvedCreditCards = Array.isArray(creditCardRows?.items) ? creditCardRows.items : [];
+      if (!resolvedCreditCards.length) {
+        try {
+          const adminCardRows = await api.listCreditCards();
+          const candidateRows = Array.isArray(adminCardRows?.items) ? adminCardRows.items : [];
+          resolvedCreditCards = candidateRows.filter((row) => preferredCustomerIds.includes(String(row.customerId || "")));
+        } catch (fallbackError) {
+          console.warn("loadInitialData: credit card fallback failed:", fallbackError?.message || fallbackError);
+        }
+      }
+
       setCustomers(visibleCustomers);
       setAccounts(visibleAccounts);
       setScheduledBills(visibleScheduledBills);
@@ -216,6 +238,7 @@ export default function App() {
       setLoanApplications(visibleLoanApplications);
       setInterestRate(rate.reserveBankMinSavingsInterestRate);
       setSummaries(visibleSummaries);
+      setCreditCards(resolvedCreditCards);
       setBillHistory(
         hasAdminScope
           ? billHistoryRows
@@ -438,11 +461,22 @@ export default function App() {
     }
   }
 
+  function onStartCreditCardPayment() {
+    setActiveTab("Bill Payments");
+  }
+
   async function onManualBill(e) {
     e.preventDefault();
     setBillMessage("");
     try {
-      await api.payBillManual({ ...manualBillForm, amount: Number(manualBillForm.amount) });
+      const fallbackAccountId = String(manualBillForm.accountId || accounts?.[0]?.id || "");
+      await api.payBillManual({
+        ...manualBillForm,
+        accountId: fallbackAccountId,
+        paymentMethod: manualBillForm.paymentMethod || "account",
+        paymentSourceId: manualBillForm.paymentSourceId || "",
+        amount: Number(manualBillForm.amount),
+      });
       setBillMessage("Manual bill payment processed.");
       await loadInitialData();
     } catch (err) {
@@ -454,7 +488,14 @@ export default function App() {
     e.preventDefault();
     setBillMessage("");
     try {
-      await api.scheduleBill({ ...scheduleBillForm, amount: Number(scheduleBillForm.amount) });
+      const fallbackAccountId = String(scheduleBillForm.accountId || accounts?.[0]?.id || "");
+      await api.scheduleBill({
+        ...scheduleBillForm,
+        accountId: fallbackAccountId,
+        paymentMethod: scheduleBillForm.paymentMethod || "account",
+        paymentSourceId: scheduleBillForm.paymentSourceId || "",
+        amount: Number(scheduleBillForm.amount),
+      });
       setBillMessage("Scheduled bill payment created.");
       await loadInitialData();
     } catch (err) {
@@ -794,6 +835,7 @@ export default function App() {
 
   return (
     <>
+      <AccountProvider enabled={Boolean(currentUser) && !isAdminUser}>
       <AppLayout
         activeTab={activeTab}
         businessSubTab={businessSubTab}
@@ -848,12 +890,15 @@ export default function App() {
             onVerifyTransfer={onVerifyTransfer}
             transferMessage={transferMessage}
             setTransferMessage={setTransferMessage}
+            transferStartOption={transferStartOption}
+            clearTransferStartOption={() => setTransferStartOption("")}
           />
         )}
 
         {!loading && currentUser && activeTab === "Bill Payments" && (
           <BillPaymentsPage
             accounts={accounts}
+            creditCards={creditCards}
             manualBillForm={manualBillForm}
             setManualBillForm={setManualBillForm}
             onManualBill={onManualBill}
@@ -907,7 +952,11 @@ export default function App() {
         )}
 
         {!loading && currentUser && activeTab === "Business" && businessSubTab === "cards" && (
-          <CreditCardPage currentUser={currentUser} />
+          <CreditCardPage
+            currentUser={currentUser}
+            onSelectTab={setActiveTab}
+            onPayNow={onStartCreditCardPayment}
+          />
         )}
 
         {!loading && currentUser && activeTab === "Investments" && (
@@ -933,6 +982,7 @@ export default function App() {
       </AppLayout>
 
       <ChatWidget currentUser={currentUser} authToken={authToken} />
+      </AccountProvider>
     </>
   );
 }

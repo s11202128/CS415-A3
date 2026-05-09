@@ -182,8 +182,29 @@ const toAccountResponse = (a) => ({
   maintenanceFee: a.accountType === "Simple Access" ? 2.5 : 0,
   currency: a.currency,
   status: a.status,
+  nickname: a.nickname || null,
+  isDefault: Boolean(a.isDefault),
   createdAt: a.createdAt,
 });
+
+// Ensure each customer has exactly one default account: if none of their
+// active accounts is flagged isDefault, mark the lowest-id active row.
+async function ensureCustomerHasDefault(customerId) {
+  if (!customerId) return;
+  const existing = await Account.findOne({
+    where: { customerId, isDefault: true },
+    attributes: ["id"],
+  });
+  if (existing) return;
+  const candidate = await Account.findOne({
+    where: { customerId, status: "active" },
+    order: [["id", "ASC"]],
+    attributes: ["id"],
+  });
+  if (candidate) {
+    await Account.update({ isDefault: true }, { where: { id: candidate.id } });
+  }
+}
 
 const toInvestmentResponse = (row) => ({
   id: row.id,
@@ -974,6 +995,8 @@ router.post("/accounts", requireAuth, requireAdmin, asyncHandler(async (req, res
     status: "active",
   });
 
+  await ensureCustomerHasDefault(customer.id);
+  await account.reload();
   res.status(201).json(toAccountResponse(account));
 }));
 
@@ -1049,6 +1072,8 @@ router.patch("/admin/accounts/:id/approve", asyncHandler(async (req, res) => {
     rejectionReason: null,
   });
 
+  await ensureCustomerHasDefault(account.customerId);
+  await account.reload();
   res.json(toAccountResponse(account));
 }));
 
@@ -1152,6 +1177,8 @@ router.post("/admin/create-account", asyncHandler(async (req, res) => {
     status: "active",
   });
 
+  await ensureCustomerHasDefault(customer.id);
+  await account.reload();
   res.status(201).json(toAccountResponse(account));
 }));
 
@@ -1536,11 +1563,20 @@ router.post("/bills/manual", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const payment = await postBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     mode: "manual",
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1551,12 +1587,21 @@ router.post("/bill-payment", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const payment = await postBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     mode: payload.mode || "manual",
     scheduledDate: payload.scheduledDate || null,
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1567,12 +1612,21 @@ router.post("/pay-bill", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const payment = await postBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     mode: payload.mode || "manual",
     scheduledDate: payload.scheduledDate || null,
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...payment, accountNumber: account.accountNumber });
 }));
@@ -1583,11 +1637,21 @@ router.post("/bills/scheduled", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const row = await scheduleBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     scheduledDate: payload.scheduledDate,
+    recurrence: payload.frequency || payload.recurrence || "once",
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...row, accountNumber: account.accountNumber });
 }));
@@ -1598,11 +1662,21 @@ router.post("/schedule-payment", requireAuth, asyncHandler(async (req, res) => {
   if (!isAdmin(req) && account.customerId !== getAuthenticatedCustomerId(req)) {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const paymentMethod = payload.paymentMethod || "account";
+  const paymentSourceId = paymentMethod === "credit_card"
+    ? String(payload.paymentSourceId || "").trim()
+    : String(payload.paymentSourceId || account.id);
+  if (paymentMethod === "credit_card" && !paymentSourceId) {
+    return res.status(400).json({ error: "Credit card selection is required" });
+  }
   const row = await scheduleBillPayment({
     accountId: account.id,
     payee: payload.payee,
     amount: Number(payload.amount),
     scheduledDate: payload.scheduledDate,
+    recurrence: payload.frequency || payload.recurrence || "once",
+    paymentMethod,
+    paymentSourceId,
   });
   res.status(201).json({ ...row, accountNumber: account.accountNumber });
 }));
@@ -1620,6 +1694,9 @@ router.get("/bills/scheduled", requireAuth, asyncHandler(async (req, res) => {
       payee: b.billType,
       amount: Number(b.amount),
       scheduledDate: b.dueDate,
+      recurrence: b.recurrence || "once",
+      paymentMethod: b.payment_method || "account",
+      paymentSourceId: b.payment_source_id,
       status: "scheduled",
       createdAt: b.createdAt,
     }))
@@ -1640,6 +1717,9 @@ router.get("/bills/history", requireAuth, asyncHandler(async (req, res) => {
       payee: b.billType,
       amount: Number(b.amount),
       scheduledDate: b.dueDate,
+      recurrence: b.recurrence || "once",
+      paymentMethod: b.payment_method || "account",
+      paymentSourceId: b.payment_source_id,
       status: b.status,
       createdAt: b.createdAt,
       description: b.description,

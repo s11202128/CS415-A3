@@ -22,6 +22,20 @@ const Bill = sequelize.define('Bill', {
   dueDate: {
     type: DataTypes.DATE,
   },
+  recurrence: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'once',
+  },
+  payment_method: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'account',
+  },
+  payment_source_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   status: {
     type: DataTypes.STRING,
     defaultValue: 'pending',

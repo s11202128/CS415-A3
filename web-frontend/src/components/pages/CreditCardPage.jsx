@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  CreditCard, Snowflake, Flame, Download, ShoppingBag, Coffee, Plane,
+  CreditCard, Download, ShoppingBag, Coffee, Plane,
   Award, ArrowRight, Eye, EyeOff,
 } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
@@ -13,11 +13,10 @@ const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractio
 
 /**
  * CreditCardPage — premium credit-card UI with 3D card visual, KPI tiles,
- * spending sparkline, recent purchases and freeze/unfreeze action.
+ * spending sparkline and recent purchases.
  */
-export default function CreditCardPage({ currentUser }) {
+export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
   const [hide, setHide] = useState(false);
-  const [frozen, setFrozen] = useState(false);
 
   // Demo placeholder values — wire to real /creditcard endpoints from CreditCardPanel
   const limit = 5000;
@@ -78,13 +77,6 @@ export default function CreditCardPage({ currentUser }) {
               <p className="font-semibold">{hide ? "•••" : "•••"}</p>
             </div>
           </div>
-          {frozen && (
-            <div className="absolute inset-0 grid place-items-center bg-navy-950/60 backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-cyan-200 font-bold">
-                <Snowflake className="h-5 w-5" /> Card Frozen
-              </div>
-            </div>
-          )}
         </motion.div>
 
         {/* KPI tiles */}
@@ -97,8 +89,18 @@ export default function CreditCardPage({ currentUser }) {
       </section>
 
       {/* Actions row */}
-      <section className="grid sm:grid-cols-3 gap-4">
-        <button className="bof-card text-left group">
+      <section className="grid sm:grid-cols-2 gap-4">
+        <button
+          type="button"
+          onClick={() => {
+            if (onPayNow) {
+              onPayNow();
+              return;
+            }
+            onSelectTab?.("Bill Payments");
+          }}
+          className="bof-card text-left group"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-navy-900">Pay Now</p>
@@ -106,21 +108,6 @@ export default function CreditCardPage({ currentUser }) {
             </div>
             <div className="grid place-items-center h-10 w-10 rounded-xl bg-emerald-500 text-white group-hover:scale-105 transition-transform">
               <ArrowRight className="h-5 w-5" />
-            </div>
-          </div>
-        </button>
-
-        <button
-          onClick={() => setFrozen((f) => !f)}
-          className="bof-card text-left group"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-navy-900">{frozen ? "Unfreeze Card" : "Freeze Card"}</p>
-              <p className="text-xs text-slate-600">{frozen ? "Re-enable spending" : "Temporarily block all transactions"}</p>
-            </div>
-            <div className={["grid place-items-center h-10 w-10 rounded-xl text-white group-hover:scale-105 transition-transform", frozen ? "bg-rose-500" : "bg-cyan-500"].join(" ")}>
-              {frozen ? <Flame className="h-5 w-5" /> : <Snowflake className="h-5 w-5" />}
             </div>
           </div>
         </button>
@@ -188,7 +175,7 @@ export default function CreditCardPage({ currentUser }) {
           Create your card, charge purchases, view your summary and make payments via the
           existing <code>/creditcard</code> backend.
         </p>
-        <CreditCardPanel />
+        <CreditCardPanel currentUser={currentUser} />
       </section>
     </div>
   );

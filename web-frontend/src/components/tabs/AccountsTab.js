@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../../api";
+import AccountCardsRow from "../account/AccountCardsRow";
 
 const ACCOUNT_SECTIONS = ["Summary", "My Accounts", "Open Account"];
 const DEFAULT_ACCOUNT_TYPE_DETAILS = { desc: "Unknown type", fee: "N/A", interest: "N/A", bestFor: "N/A" };
@@ -80,6 +81,9 @@ export default function AccountsTab({
 
   return (
     <section className="panel-grid">
+      <div className="mb-4">
+        <AccountCardsRow />
+      </div>
       <article className="panel wide">
         {/* Horizontal section switcher */}
         <nav className="acct-tab-bar">

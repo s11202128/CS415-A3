@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import AccountCardsRow from "../account/AccountCardsRow";
 
 const TRANSFER_OPTIONS = [
   {
@@ -21,6 +22,11 @@ const TRANSFER_OPTIONS = [
     id: "wallet-provider-transfer",
     label: "TRANSFER TO WALLET PROVIDER",
     description: "Send funds to approved wallet providers in Fiji.",
+  },
+  {
+    id: "credit-card-payment",
+    label: "PAY CREDIT CARD",
+    description: "Pay down your credit card balance from your banking profile.",
   },
 
   {
@@ -76,6 +82,8 @@ export default function TransfersTab({
   onVerifyTransfer,
   transferMessage,
   setTransferMessage,
+  transferStartOption,
+  clearTransferStartOption,
 }) {
   const [open, setOpen] = useState(true);
   const [activeOption, setActiveOption] = useState("bof-customer-transfer");
@@ -90,11 +98,16 @@ export default function TransfersTab({
   const [otpInput, setOtpInput] = useState("");
   const [transferSuccess, setTransferSuccess] = useState(null);
   const [lastCompletedTransfer, setLastCompletedTransfer] = useState(null);
+  const [creditCards, setCreditCards] = useState([]);
+  const [creditCardLoading, setCreditCardLoading] = useState(false);
+  const [creditCardPaymentForm, setCreditCardPaymentForm] = useState({ cardNumber: "", amount: "" });
+  const [creditCardPaymentMessage, setCreditCardPaymentMessage] = useState("");
 
   const activeTransferOption = TRANSFER_OPTIONS.find((option) => option.id === activeOption) || TRANSFER_OPTIONS[0];
 
   const showTransferForm = activeOption === "bof-customer-transfer";
   const showLocalBankForm = activeOption === "local-bank-transfer";
+  const showCreditCardPaymentForm = activeOption === "credit-card-payment";
   const showLimitsContent = activeOption === "transfer-limits";
   const showWalletContent = activeOption === "wallet-provider-transfer";
   const sourceAccount =
@@ -113,6 +126,71 @@ export default function TransfersTab({
     { label: "Weekly", value: CUSTOMER_TRANSFER_LIMITS.weekly },
     { label: "Monthly", value: CUSTOMER_TRANSFER_LIMITS.monthly },
   ];
+
+  const visibleCreditCards = creditCards.filter((card) => {
+    const accountCustomerIds = new Set(
+      (accounts || [])
+        .map((account) => String(account.customerId || "").trim())
+        .filter(Boolean),
+    );
+    if (accountCustomerIds.size === 0) {
+      return true;
+    }
+    return accountCustomerIds.has(String(card.customerId || "").trim());
+  });
+
+  const selectedCreditCard =
+    visibleCreditCards.find((card) => String(card.cardNumber) === String(creditCardPaymentForm.cardNumber || "")) ||
+    null;
+
+  useEffect(() => {
+    if (!transferStartOption) return;
+    setActiveOption(transferStartOption);
+    if (clearTransferStartOption) {
+      clearTransferStartOption();
+    }
+  }, [transferStartOption, clearTransferStartOption]);
+
+  useEffect(() => {
+    if (!showCreditCardPaymentForm) return;
+    let cancelled = false;
+
+    async function loadCreditCards() {
+      setCreditCardLoading(true);
+      setCreditCardPaymentMessage("");
+      try {
+        const data = await api.listCreditCards();
+        if (cancelled) return;
+        const items = Array.isArray(data?.items) ? data.items : [];
+        setCreditCards(items);
+      } catch (err) {
+        if (cancelled) return;
+        setCreditCardPaymentMessage(err.message || "Unable to load credit cards.");
+      } finally {
+        if (!cancelled) {
+          setCreditCardLoading(false);
+        }
+      }
+    }
+
+    loadCreditCards();
+    return () => {
+      cancelled = true;
+    };
+  }, [showCreditCardPaymentForm]);
+
+  useEffect(() => {
+    if (!showCreditCardPaymentForm) return;
+    if (selectedCreditCard) return;
+    if (visibleCreditCards.length === 0) {
+      setCreditCardPaymentForm((prev) => ({ ...prev, cardNumber: "" }));
+      return;
+    }
+    setCreditCardPaymentForm((prev) => ({
+      ...prev,
+      cardNumber: prev.cardNumber || visibleCreditCards[0].cardNumber,
+    }));
+  }, [showCreditCardPaymentForm, visibleCreditCards, selectedCreditCard]);
 
   useEffect(() => {
     if (!showTransferForm) {
@@ -314,6 +392,29 @@ export default function TransfersTab({
     setLocalBankMessage("Local bank transfer submitted. Processing may take 1–3 business days.");
   }
 
+  async function handleCreditCardPayment(e) {
+    e.preventDefault();
+    setCreditCardPaymentMessage("");
+    try {
+      const amount = toAmount(creditCardPaymentForm.amount);
+      if (!creditCardPaymentForm.cardNumber) {
+        throw new Error("Select a credit card");
+      }
+      if (!amount) {
+        throw new Error("Enter a valid payment amount");
+      }
+      await api.payCreditCard(creditCardPaymentForm.cardNumber, amount);
+      setCreditCardPaymentMessage("Credit card payment completed successfully.");
+      setCreditCardPaymentForm((prev) => ({ ...prev, amount: "" }));
+
+      const data = await api.listCreditCards();
+      const items = Array.isArray(data?.items) ? data.items : [];
+      setCreditCards(items);
+    } catch (err) {
+      setCreditCardPaymentMessage(err.message || "Credit card payment failed.");
+    }
+  }
+
   function handleAnotherTransaction() {
     setTransferSuccess(null);
     if (setTransferMessage) setTransferMessage("");
@@ -346,6 +447,9 @@ export default function TransfersTab({
 
   return (
     <section className="panel-grid">
+      <div className="mb-4">
+        <AccountCardsRow />
+      </div>
       <article className="panel wide">
         {/* Horizontal transfer type tab bar */}
         <nav className="acct-tab-bar">
@@ -541,6 +645,61 @@ export default function TransfersTab({
             <button type="submit" disabled={!sourceAccount || !hasAccounts}>
               Send Transfer
             </button>
+          </form>
+        ) : showCreditCardPaymentForm ? (
+          <form onSubmit={handleCreditCardPayment}>
+            <label>
+              Credit Card
+              <select
+                value={creditCardPaymentForm.cardNumber}
+                onChange={(e) =>
+                  setCreditCardPaymentForm((prev) => ({ ...prev, cardNumber: e.target.value }))
+                }
+                required
+                disabled={creditCardLoading || visibleCreditCards.length === 0}
+              >
+                <option value="" disabled>
+                  {creditCardLoading ? "Loading cards..." : "Select a credit card"}
+                </option>
+                {visibleCreditCards.map((card) => (
+                  <option key={card.cardNumber} value={card.cardNumber}>
+                    {card.cardNumber} (Balance: FJD {Number(card.currentBalance || 0).toLocaleString()})
+                  </option>
+                ))}
+              </select>
+            </label>
+            {selectedCreditCard && (
+              <p className="hint">
+                Available Credit: FJD {Number(selectedCreditCard.availableCredit || 0).toLocaleString()}
+              </p>
+            )}
+            <label>
+              Payment Amount (FJD)
+              <div className="loan-currency-input">
+                <span className="loan-currency-prefix">$</span>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={creditCardPaymentForm.amount}
+                  onChange={(e) =>
+                    setCreditCardPaymentForm((prev) => ({ ...prev, amount: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+            </label>
+            <button type="submit" disabled={!creditCardPaymentForm.cardNumber || !toAmount(creditCardPaymentForm.amount)}>
+              Pay Credit Card
+            </button>
+            {creditCardPaymentMessage ? (
+              <p className={/success|completed/i.test(String(creditCardPaymentMessage)) ? "hint" : "status error"}>
+                {creditCardPaymentMessage}
+              </p>
+            ) : null}
+            {!creditCardLoading && visibleCreditCards.length === 0 ? (
+              <p className="status error">No credit card found for your profile.</p>
+            ) : null}
           </form>
         ) : showLimitsContent ? (
           <div className="transfers-placeholder">

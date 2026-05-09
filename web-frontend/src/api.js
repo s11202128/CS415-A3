@@ -102,10 +102,43 @@ export const api = {
   getProfile: (customerId) => request(`/profile/${encodeURIComponent(customerId)}`),
   updateProfile: (body) => request("/update-profile", { method: "PUT", body: JSON.stringify(body) }),
   getAccounts: () => request("/accounts"),
+  listMyAccounts: () => request("/accounts/mine"),
+  renameAccount: (id, nickname) =>
+    request(`/accounts/${id}/nickname`, {
+      method: "PATCH",
+      body: JSON.stringify({ nickname }),
+    }),
+  setDefaultAccount: (id) =>
+    request(`/accounts/${id}/default`, { method: "PATCH" }),
   createAccount: (body) => request("/accounts", { method: "POST", body: JSON.stringify(body) }),
   createAccountRequest: (body) => request("/accounts/request", { method: "POST", body: JSON.stringify(body) }),
   updateAccountAdmin: (id, body) => request(`/admin/accounts/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   freezeAccountAdmin: (id) => request(`/admin/accounts/${id}/freeze`, { method: "POST" }),
+  // ───────── Credit cards ─────────
+  listCreditCards: () => request("/creditcard/list"),
+  createCreditCard: (body) =>
+    request("/creditcard/create", { method: "POST", body: JSON.stringify(body) }),
+  updateCreditCard: (cardNumber, body) =>
+    request(`/creditcard/${encodeURIComponent(cardNumber)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteCreditCard: (cardNumber) =>
+    request(`/creditcard/${encodeURIComponent(cardNumber)}`, { method: "DELETE" }),
+  chargeCreditCard: (cardNumber, amount) =>
+    request(`/creditcard/${encodeURIComponent(cardNumber)}/charge`, {
+      method: "POST",
+      body: JSON.stringify({ amount: Number(amount) }),
+    }),
+  payCreditCard: (cardNumber, amount) =>
+    request(`/creditcard/${encodeURIComponent(cardNumber)}/payment`, {
+      method: "POST",
+      body: JSON.stringify({ amount: Number(amount) }),
+    }),
+  freezeCreditCard: (cardNumber) =>
+    request(`/creditcard/${encodeURIComponent(cardNumber)}/freeze`, { method: "POST" }),
+  unfreezeCreditCard: (cardNumber) =>
+    request(`/creditcard/${encodeURIComponent(cardNumber)}/unfreeze`, { method: "POST" }),
   getTransactions: (accountId) => request(`/transactions?accountId=${encodeURIComponent(accountId)}`),
   getAdminTransactions: (accountNumber) => {
     const suffix = accountNumber ? `?accountNumber=${encodeURIComponent(accountNumber)}` : "";
@@ -133,6 +166,7 @@ export const api = {
   getScheduledBills: () => request("/bills/scheduled"),
   getBillHistory: () => request("/bills/history"),
   runScheduledBill: (id) => request(`/bills/scheduled/${id}/run`, { method: "POST" }),
+  getMyCreditCards: () => request("/creditcard/my-cards"),
   getStatement: (accountId) => request(`/statements/${accountId}`),
   createStatementRequest: (body) => request("/statements/request", { method: "POST", body: JSON.stringify(body) }),
   getStatementRequests: () => request("/statements/requests"),
