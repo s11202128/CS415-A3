@@ -1,58 +1,61 @@
-export default function AdminLoansTab({ loanApplications, onAdminUpdateLoanStatus }) {
-  function formatLoanDate(value) {
-    if (!value) return "-";
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return "-";
-    return d.toLocaleString();
-  }
+import { useMemo } from "react";
+import DataTable, { StatusPill, TableButton } from "../ui/DataTable";
+
+function formatLoanDate(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString();
+}
+
+export default function AdminLoansTab({ loanApplications = [], onAdminUpdateLoanStatus }) {
+  const rows = useMemo(
+    () => loanApplications.map((l, i) => ({ ...l, _seq: i + 1 })),
+    [loanApplications],
+  );
+
+  const columns = [
+    { key: "_seq", header: "#", width: "60px", align: "right" },
+    { key: "customerId", header: "Customer",
+      cell: (r) => <span className="font-mono text-xs text-navy-900">{r.customerId}</span> },
+    { key: "requestedAmount", header: "Amount", align: "right",
+      accessor: (r) => Number(r.requestedAmount || 0),
+      cell: (r) => <span className="font-bold tabular-nums text-navy-900">FJD {Number(r.requestedAmount || 0).toFixed(2)}</span> },
+    { key: "status", header: "Status",
+      cell: (r) => {
+        const s = String(r.status || "").toLowerCase();
+        const tone = s === "approved" ? "success" : s === "rejected" ? "danger" : ["submitted","pending"].includes(s) ? "warning" : "slate";
+        return <StatusPill tone={tone}>{r.status || "—"}</StatusPill>;
+      } },
+    { key: "submittedAt", header: "Sent At",
+      accessor: (r) => r.submittedAt || r.createdAt,
+      cell: (r) => formatLoanDate(r.submittedAt || r.createdAt) || <span className="text-slate-300">—</span> },
+    { key: "reviewedAt", header: "Decision At",
+      accessor: (r) => r.reviewedAt,
+      cell: (r) => formatLoanDate(r.reviewedAt) || <span className="text-slate-300">—</span> },
+    { key: "actions", header: "Actions", sortable: false, align: "right",
+      cell: (r) => {
+        const s = String(r.status || "").toLowerCase();
+        if (["submitted","pending"].includes(s)) {
+          return (
+            <div className="inline-flex gap-1.5 justify-end">
+              <TableButton tone="success" onClick={() => onAdminUpdateLoanStatus(r.id, "approved")}>Approve</TableButton>
+              <TableButton tone="danger"  onClick={() => onAdminUpdateLoanStatus(r.id, "rejected")}>Reject</TableButton>
+            </div>
+          );
+        }
+        return <span className="text-xs text-slate-400">Finalized</span>;
+      } },
+  ];
 
   return (
-    <article className="panel wide">
-      <h3 className="loan-management-title">Loan Application Management</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Customer</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Sent At</th>
-            <th>Approved/Rejected At</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loanApplications.map((loan, index) => {
-            const normalizedStatus = String(loan.status || "").toLowerCase();
-            const canReview = ["submitted", "pending"].includes(normalizedStatus);
-
-            return (
-              <tr key={loan.id}>
-                <td>{index + 1}</td>
-                <td>{loan.customerId}</td>
-                <td>FJD {Number(loan.requestedAmount || 0).toFixed(2)}</td>
-                <td>{loan.status}</td>
-                <td>{formatLoanDate(loan.submittedAt || loan.createdAt)}</td>
-                <td>{formatLoanDate(loan.reviewedAt)}</td>
-                <td>
-                  {canReview ? (
-                    <div className="inline-controls">
-                      <button type="button" onClick={() => onAdminUpdateLoanStatus(loan.id, "approved")}>Approve</button>
-                      <button type="button" onClick={() => onAdminUpdateLoanStatus(loan.id, "rejected")}>Reject</button>
-                    </div>
-                  ) : normalizedStatus === "approved" ? (
-                    <span className="status success">Approved</span>
-                  ) : normalizedStatus === "rejected" ? (
-                    <span className="status error">Rejected</span>
-                  ) : (
-                    <span className="status">Finalized</span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </article>
+    <DataTable
+      title="Loan Application Management"
+      subtitle={`${loanApplications.length} applications on file`}
+      columns={columns}
+      rows={rows}
+      searchPlaceholder="Search by customer or status…"
+      defaultSort={{ key: "submittedAt", dir: "desc" }}
+    />
   );
 }
