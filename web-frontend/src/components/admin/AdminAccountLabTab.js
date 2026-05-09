@@ -27,7 +27,7 @@ function validatePositive(value, label = "Amount") {
 export default function AdminAccountLabTab() {
   // Bank-account state
   const [accounts, setAccounts] = useState([]);
-  const [createForm, setCreateForm] = useState({ type: "access", accountId: "", owner: "" });
+  const [createForm, setCreateForm] = useState({ type: "access", accountId: "", customerId: "", owner: "" });
   const [actionForm, setActionForm] = useState({ accountId: "", amount: "" });
   const [accountMessage, setAccountMessage] = useState("");
   const [accountError, setAccountError] = useState("");
@@ -73,13 +73,14 @@ export default function AdminAccountLabTab() {
     setBusy(true);
     try {
       if (!createForm.accountId.trim()) throw new Error("Account ID is required");
+      if (!createForm.customerId.trim()) throw new Error("Customer ID is required");
       if (!createForm.owner.trim()) throw new Error("Owner is required");
       const created = await apiRequest("/accounts/create", {
         method: "POST",
         body: JSON.stringify(createForm),
       });
       setAccountMessage(`Created ${created.accountType} account ${created.accountId}`);
-      setCreateForm({ type: "access", accountId: "", owner: "" });
+      setCreateForm({ type: "access", accountId: "", customerId: "", owner: "" });
       await refreshAccounts();
     } catch (err) {
       setAccountError(err.message);
@@ -218,7 +219,7 @@ export default function AdminAccountLabTab() {
       <section className="panel" style={{ border: "1px solid #ddd", padding: 16, borderRadius: 8 }}>
         <h3>Bank Accounts</h3>
 
-        <form onSubmit={handleCreateAccount} style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, alignItems: "end", marginBottom: 12 }}>
+        <form onSubmit={handleCreateAccount} style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, alignItems: "end", marginBottom: 12 }}>
           <label>
             Type
             <select
@@ -242,6 +243,15 @@ export default function AdminAccountLabTab() {
             <input
               value={createForm.owner}
               onChange={(e) => setCreateForm({ ...createForm, owner: e.target.value })}
+            />
+          </label>
+          <label>
+            Customer ID
+            <input
+              type="number"
+              min="1"
+              value={createForm.customerId}
+              onChange={(e) => setCreateForm({ ...createForm, customerId: e.target.value })}
             />
           </label>
           <button type="submit" disabled={busy}>Create Account</button>

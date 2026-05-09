@@ -21,6 +21,7 @@ async function apiRequest(path, options = {}) {
 export default function AccountManager() {
   const [type, setType] = useState("access");
   const [accountId, setAccountId] = useState("");
+  const [customerId, setCustomerId] = useState("");
   const [owner, setOwner] = useState("");
   const [account, setAccount] = useState(null);
   const [error, setError] = useState("");
@@ -38,7 +39,7 @@ export default function AccountManager() {
     try {
       const created = await apiRequest("/accounts/create", {
         method: "POST",
-        body: JSON.stringify({ type, accountId, owner }),
+        body: JSON.stringify({ type, accountId, customerId, owner }),
       });
       setAccount(created);
     } catch (err) {
@@ -63,6 +64,10 @@ export default function AccountManager() {
         <label>
           Account ID:&nbsp;
           <input value={accountId} onChange={(e) => setAccountId(e.target.value)} required />
+        </label>
+        <label>
+          Customer ID:&nbsp;
+          <input type="number" min="1" value={customerId} onChange={(e) => setCustomerId(e.target.value)} required />
         </label>
         <label>
           Owner:&nbsp;

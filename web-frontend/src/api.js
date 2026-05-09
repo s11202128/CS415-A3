@@ -102,6 +102,7 @@ export const api = {
   getProfile: (customerId) => request(`/profile/${encodeURIComponent(customerId)}`),
   updateProfile: (body) => request("/update-profile", { method: "PUT", body: JSON.stringify(body) }),
   getAccounts: () => request("/accounts"),
+  listBusinessLayerAccounts: () => request("/accounts/list"),
   listMyAccounts: () => request("/accounts/mine"),
   renameAccount: (id, nickname) =>
     request(`/accounts/${id}/nickname`, {
