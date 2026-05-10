@@ -1,4 +1,5 @@
 // Usage: node checkCustomer.js <email>
+require('dotenv').config();
 const sequelize = require('./src/config/database');
 const { Customer } = require('./src/models');
 

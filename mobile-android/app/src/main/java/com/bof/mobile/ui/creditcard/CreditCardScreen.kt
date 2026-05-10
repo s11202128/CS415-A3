@@ -15,9 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Eye
-import androidx.compose.material.icons.filled.EyeOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,7 +41,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
 import com.bof.mobile.model.CreditCardItem
 import com.bof.mobile.ui.components.ScreenHeader
 import com.bof.mobile.viewmodel.CreditCardViewModel
@@ -152,10 +148,16 @@ fun CreditCardScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    IconButton(onClick = { hideDetails = !hideDetails }) {
-                        Icon(
-                            imageVector = if (hideDetails) Icons.Filled.Eye else Icons.Filled.EyeOff,
-                            contentDescription = if (hideDetails) "Show details" else "Hide details"
+                    Button(
+                        onClick = { hideDetails = !hideDetails },
+                        modifier = Modifier.height(36.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Text(
+                            text = if (hideDetails) "👁️ Show details" else "👁️‍🗨️ Hide details",
+                            style = MaterialTheme.typography.labelSmall
                         )
                     }
                 }
