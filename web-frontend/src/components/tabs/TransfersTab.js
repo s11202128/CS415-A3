@@ -446,13 +446,13 @@ export default function TransfersTab({
   }
 
   return (
-    <section className="panel-grid">
+    <section className="panel-grid premium-transfers">
       <div className="mb-4">
         <AccountCardsRow />
       </div>
-      <article className="panel wide">
+      <article className="panel wide premium-transfers-panel">
         {/* Horizontal transfer type tab bar */}
-        <nav className="acct-tab-bar">
+        <nav className="acct-tab-bar premium-tab-bar">
           {TRANSFER_OPTIONS.map((option) => (
             <button
               key={option.id}
@@ -466,13 +466,15 @@ export default function TransfersTab({
         </nav>
 
         <div className="acct-tab-body">
-          <p className="hint transfers-tab-desc">{activeTransferOption.description}</p>
-          {!hasAccounts && (
-            <p className="status error">No account found. You cannot transfer funds until you open an account.</p>
-          )}
+          <div className="premium-section">
+            <p className="hint transfers-tab-desc">{activeTransferOption.description}</p>
+            {!hasAccounts && (
+              <p className="status error">No account found. You cannot transfer funds until you open an account.</p>
+            )}
+          </div>
 
         {transferSuccess ? (
-          <div style={{ textAlign: "center", padding: "20px" }}>
+          <div className="premium-success-screen" style={{ textAlign: "center", padding: "20px" }}>
             <div className="status success" style={{ fontSize: "16px", marginBottom: "20px" }}>
               ✓ {transferSuccess.message}
             </div>
@@ -508,7 +510,7 @@ export default function TransfersTab({
             </div>
           </div>
         ) : showTransferForm ? (
-          <form onSubmit={handleSendTransfer}>
+          <form className="premium-form-grid" onSubmit={handleSendTransfer}>
             <div className="transfer-from-row">
               <label>
                 From Account
@@ -587,7 +589,7 @@ export default function TransfersTab({
             ) : null}
           </form>
         ) : showLocalBankForm ? (
-          <form onSubmit={handleLocalBankSubmit}>
+          <form className="premium-form-grid" onSubmit={handleLocalBankSubmit}>
             <label>
               Recipient Name
               <input
@@ -647,7 +649,7 @@ export default function TransfersTab({
             </button>
           </form>
         ) : showCreditCardPaymentForm ? (
-          <form onSubmit={handleCreditCardPayment}>
+          <form className="premium-form-grid" onSubmit={handleCreditCardPayment}>
             <label>
               Credit Card
               <select
@@ -702,7 +704,7 @@ export default function TransfersTab({
             ) : null}
           </form>
         ) : showLimitsContent ? (
-          <div className="transfers-placeholder">
+          <div className="transfers-placeholder premium-limits">
             <p className="hint">Current entered amount: FJD {currentTransferAmount.toLocaleString()}</p>
             {limitRows.map((row) => {
               const percent = Math.min(100, Math.round((currentTransferAmount / row.value) * 100));
@@ -734,7 +736,7 @@ export default function TransfersTab({
             })}
           </div>
         ) : showWalletContent ? (
-          <div className="transfers-placeholder">
+          <div className="transfers-placeholder premium-wallet">
             <p className="hint">Supported digital wallets in Fiji:</p>
             <label>
               Select Wallet Provider
@@ -763,7 +765,7 @@ export default function TransfersTab({
           </p>
         )}
         {pendingTransfer.transferId && (
-          <form onSubmit={(e) => {
+          <form className="premium-form-grid premium-otp-form" onSubmit={(e) => {
             e.preventDefault();
             setPendingTransfer({ ...pendingTransfer, otp: otpInput });
             onVerifyTransfer();

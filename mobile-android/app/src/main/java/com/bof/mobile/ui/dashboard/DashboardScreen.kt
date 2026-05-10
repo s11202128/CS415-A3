@@ -78,6 +78,7 @@ fun DashboardScreen(
     onNavigateToDeposit: () -> Unit = {},
     onNavigateToWithdraw: () -> Unit = {},
     onNavigateToBillPayment: () -> Unit = {},
+    onNavigateToCreditCards: () -> Unit = {},
     onNavigateToStatement: () -> Unit = {},
     onNavigateToReport: () -> Unit = {},
     onNavigateToActivity: () -> Unit = {}
@@ -236,6 +237,7 @@ fun DashboardScreen(
                     onSendMoney = onNavigateToTransfers,
                     onApplyLoan = onNavigateToFeatures,
                     onBillPayment = onNavigateToBillPayment,
+                    onCreditCards = onNavigateToCreditCards,
                     onAccounts = onNavigateToAccounts,
                     onTransactionHistory = onNavigateToActivity
                 )
@@ -952,6 +954,7 @@ private fun ActionButtonsSection(
     onSendMoney: () -> Unit,
     onApplyLoan: () -> Unit,
     onBillPayment: () -> Unit,
+    onCreditCards: () -> Unit,
     onAccounts: () -> Unit,
     onTransactionHistory: () -> Unit
 ) {
@@ -965,7 +968,8 @@ private fun ActionButtonsSection(
             ActionButtonCard("📜", "Transaction History", onTransactionHistory, Modifier.weight(1f))
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ActionButtonCard("🧾", "Bill Payment", onBillPayment, Modifier.fillMaxWidth())
+            ActionButtonCard("💳", "Credit Cards", onCreditCards, Modifier.weight(1f))
+            ActionButtonCard("🧾", "Bill Payment", onBillPayment, Modifier.weight(1f))
         }
     }
 }

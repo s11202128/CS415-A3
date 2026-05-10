@@ -33,7 +33,7 @@ const {
   generateRandomAccountPin,
   createTransaction,
 } = require("../store-mysql");
-const { Customer, Account, Bill, Investment, Loan, Transaction, OtpVerification, StatementRequest, ActivityLog } = require("../models");
+const { Customer, Account, Bill, Investment, Loan, Transaction, OtpVerification, StatementRequest, ActivityLog, BusinessLayerAccount } = require("../models");
 
 const loanProducts = [
   { id: "LP-001", name: "Personal Loan", annualRate: 0.089, maxAmount: 30000, minTermMonths: 6, maxTermMonths: 60 },
@@ -852,7 +852,22 @@ router.get("/accounts", requireAuth, asyncHandler(async (req, res) => {
     }
   }
 
-  res.json(rows.map(toAccountResponse));
+  // Overlay business-layer balances so Savings / Simple Access / Business
+  // accounts always show the authoritative balance from business_layer_accounts.
+  const accountNumbers = rows.map((r) => r.accountNumber);
+  const blRows = accountNumbers.length
+    ? await BusinessLayerAccount.findAll({ where: { accountId: accountNumbers } })
+    : [];
+  const blMap = {};
+  blRows.forEach((bl) => { blMap[bl.accountId] = Number(bl.balance); });
+
+  res.json(rows.map((r) => {
+    const resp = toAccountResponse(r);
+    if (Object.prototype.hasOwnProperty.call(blMap, r.accountNumber)) {
+      resp.balance = blMap[r.accountNumber];
+    }
+    return resp;
+  }));
 }));
 
 // DEBUG ENDPOINT: Show token identity and matched accounts (remove after diagnosing)

@@ -15,6 +15,7 @@ const ActivityLog = require('./ActivityLog');
 const StatementRequest = require('./StatementRequest');
 const BusinessLayerAccount = require('./BusinessLayerAccount');
 const BusinessLayerCard = require('./BusinessLayerCard');
+const CreditCardTransaction = require('./CreditCardTransaction');
 
 // Define associations
 Customer.hasMany(Account, { foreignKey: 'customerId' });
@@ -59,6 +60,17 @@ LoginLog.belongsTo(Admin, { foreignKey: 'adminId' });
 Customer.hasMany(Registration, { foreignKey: 'customerId' });
 Registration.belongsTo(Customer, { foreignKey: 'customerId' });
 
+BusinessLayerCard.hasMany(CreditCardTransaction, {
+  foreignKey: 'cardNumber',
+  sourceKey: 'cardNumber',
+  constraints: false,
+});
+CreditCardTransaction.belongsTo(BusinessLayerCard, {
+  foreignKey: 'cardNumber',
+  targetKey: 'cardNumber',
+  constraints: false,
+});
+
 module.exports = {
   sequelize,
   Customer,
@@ -77,4 +89,5 @@ module.exports = {
   StatementRequest,
   BusinessLayerAccount,
   BusinessLayerCard,
+  CreditCardTransaction,
 };

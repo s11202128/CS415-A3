@@ -102,6 +102,7 @@ export const api = {
   getProfile: (customerId) => request(`/profile/${encodeURIComponent(customerId)}`),
   updateProfile: (body) => request("/update-profile", { method: "PUT", body: JSON.stringify(body) }),
   getAccounts: () => request("/accounts"),
+  listBusinessLayerAccounts: () => request("/accounts/list"),
   listMyAccounts: () => request("/accounts/mine"),
   renameAccount: (id, nickname) =>
     request(`/accounts/${id}/nickname`, {
@@ -125,10 +126,10 @@ export const api = {
     }),
   deleteCreditCard: (cardNumber) =>
     request(`/creditcard/${encodeURIComponent(cardNumber)}`, { method: "DELETE" }),
-  chargeCreditCard: (cardNumber, amount) =>
+  chargeCreditCard: (cardNumber, amount, description = "") =>
     request(`/creditcard/${encodeURIComponent(cardNumber)}/charge`, {
       method: "POST",
-      body: JSON.stringify({ amount: Number(amount) }),
+      body: JSON.stringify({ amount: Number(amount), description: String(description || "") }),
     }),
   payCreditCard: (cardNumber, amount) =>
     request(`/creditcard/${encodeURIComponent(cardNumber)}/payment`, {
@@ -167,6 +168,13 @@ export const api = {
   getBillHistory: () => request("/bills/history"),
   runScheduledBill: (id) => request(`/bills/scheduled/${id}/run`, { method: "POST" }),
   getMyCreditCards: () => request("/creditcard/my-cards"),
+  getCreditCardTransactions: (cardNumber, options = {}) => {
+    const query = new URLSearchParams();
+    if (options.kind) query.set("kind", String(options.kind));
+    if (options.limit) query.set("limit", String(options.limit));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request(`/creditcard/${encodeURIComponent(cardNumber)}/transactions${suffix}`);
+  },
   getStatement: (accountId) => request(`/statements/${accountId}`),
   createStatementRequest: (body) => request("/statements/request", { method: "POST", body: JSON.stringify(body) }),
   getStatementRequests: () => request("/statements/requests"),
@@ -174,6 +182,12 @@ export const api = {
   updateAdminStatementRequest: (id, body) => request(`/admin/statement-requests/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   getStatementByRequest: (requestId) => request(`/statements/request/${encodeURIComponent(requestId)}`),
   downloadStatementByRequest: (requestId) => requestBlob(`/statements/request/${encodeURIComponent(requestId)}/download`),
+  downloadMyStatement: (body = {}) =>
+    requestBlob("/statement/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
   getNotifications: (customerId) => request(`/notifications/${customerId}`),
   sendNotification: (body) => request("/notifications/send", { method: "POST", body: JSON.stringify(body) }),
   getNotificationHistory: (customerId = null, limit = 200) => {

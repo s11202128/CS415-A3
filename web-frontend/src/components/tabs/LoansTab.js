@@ -59,45 +59,71 @@ export default function LoansTab({
   }
 
   return (
-    <section className="panel-grid">
-      <article className="panel wide">
-        <nav className="acct-tab-bar">
+    <section className="panel-grid premium-loans">
+      <article className="panel wide premium-loans-panel">
+        <div className="premium-loans-kpis">
+          <div className="premium-kpi-card">
+            <p className="premium-kpi-label">Products</p>
+            <p className="premium-kpi-value">{loanProducts.length}</p>
+          </div>
+          <div className="premium-kpi-card">
+            <p className="premium-kpi-label">Applications</p>
+            <p className="premium-kpi-value">{loanApplications.length}</p>
+          </div>
+          <div className="premium-kpi-card">
+            <p className="premium-kpi-label">Pending Review</p>
+            <p className="premium-kpi-value">
+              {loanApplications.filter((a) => String(a.status || "").toLowerCase() === "submitted").length}
+            </p>
+          </div>
+        </div>
+
+        <nav className="acct-tab-bar premium-tab-bar">
           {["Loan Products", "Apply for Loan", "My Applications"].map((s) => (
-            <button key={s} type="button" className={`acct-tab-btn${activeSection === s ? " active" : ""}`} onClick={() => setActiveSection(s)}>{s}</button>
+            <button
+              key={s}
+              type="button"
+              className={`acct-tab-btn${activeSection === s ? " active" : ""}`}
+              onClick={() => setActiveSection(s)}
+            >
+              {s}
+            </button>
           ))}
         </nav>
 
         <div className="acct-tab-body">
-
           {activeSection === "Loan Products" && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Annual Rate</th>
-                  <th>Max Amount</th>
-                  <th>Term</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loanProducts.map((lp) => (
-                  <tr key={lp.id}>
-                    <td>{lp.name}</td>
-                    <td>{(lp.annualRate * 100).toFixed(2)}%</td>
-                    <td>FJD {lp.maxAmount.toFixed(2)}</td>
-                    <td>{lp.minTermMonths}-{lp.maxTermMonths} months</td>
+            <div className="premium-section">
+              <p className="hint">Compare product rates, term ranges, and limits before applying.</p>
+              <table className="premium-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Annual Rate</th>
+                    <th>Max Amount</th>
+                    <th>Term</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {loanProducts.map((lp) => (
+                    <tr key={lp.id}>
+                      <td>{lp.name}</td>
+                      <td>{(lp.annualRate * 100).toFixed(2)}%</td>
+                      <td>FJD {lp.maxAmount.toFixed(2)}</td>
+                      <td>{lp.minTermMonths}-{lp.maxTermMonths} months</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {activeSection === "Apply for Loan" && (
             <>
               {loanSuccess ? (
-                <div className="transfer-success-screen">
+                <div className="transfer-success-screen premium-success-screen">
                   <h2>Loan Application Submitted Successfully</h2>
-                  <p className="hint">Your loan request has been recorded and is now pending review.</p>
+                  <p className="hint">Your request has been recorded and is pending review.</p>
                   <div className="success-details">
                     <p><strong>Customer:</strong> {submittedLoan?.customerName || "N/A"}</p>
                     <p><strong>Product:</strong> {submittedLoan?.productName || "N/A"}</p>
@@ -112,7 +138,7 @@ export default function LoansTab({
                 </div>
               ) : (
                 <>
-                  <form className="loan-form-horizontal" onSubmit={onSubmitLoan}>
+                  <form className="loan-form-horizontal premium-form-grid" onSubmit={onSubmitLoan}>
                     <label>
                       Customer
                       <select value={loanForm.customerId} onChange={(e) => setLoanForm({ ...loanForm, customerId: e.target.value })} required>
@@ -166,36 +192,38 @@ export default function LoansTab({
           )}
 
           {activeSection === "My Applications" && (
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Customer</th>
-                  <th>Product</th>
-                  <th>Amount</th>
-                  <th>Term</th>
-                  <th>Status</th>
-                  <th>Sent At</th>
-                  <th>Approved/Rejected At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loanApplications.map((a, index) => (
-                  <tr key={a.id}>
-                    <td>{index + 1}</td>
-                    <td>{customerMap[a.customerId]?.fullName || a.customerId}</td>
-                    <td>{loanProducts.find((p) => p.id === a.loanProductId)?.name || a.loanProductId}</td>
-                    <td>FJD {a.requestedAmount.toFixed(2)}</td>
-                    <td>{a.termMonths}</td>
-                    <td>{a.status}</td>
-                    <td>{formatLoanDate(a.submittedAt || a.createdAt)}</td>
-                    <td>{formatLoanDate(a.reviewedAt)}</td>
+            <div className="premium-section">
+              <p className="hint">Track submission, review, and approval history for each application.</p>
+              <table className="premium-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Amount</th>
+                    <th>Term</th>
+                    <th>Status</th>
+                    <th>Sent At</th>
+                    <th>Approved/Rejected At</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {loanApplications.map((a, index) => (
+                    <tr key={a.id}>
+                      <td>{index + 1}</td>
+                      <td>{customerMap[a.customerId]?.fullName || a.customerId}</td>
+                      <td>{loanProducts.find((p) => p.id === a.loanProductId)?.name || a.loanProductId}</td>
+                      <td>FJD {a.requestedAmount.toFixed(2)}</td>
+                      <td>{a.termMonths}</td>
+                      <td>{a.status}</td>
+                      <td>{formatLoanDate(a.submittedAt || a.createdAt)}</td>
+                      <td>{formatLoanDate(a.reviewedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-
         </div>
       </article>
     </section>

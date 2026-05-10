@@ -861,6 +861,7 @@ export default function App() {
           <Dashboard
             currentUser={currentUser}
             accounts={accounts}
+            creditCards={creditCards}
             transactions={customerTransactions}
             lastUpdatedAt={lastUpdatedAt}
             isRefreshing={loading}
@@ -954,6 +955,8 @@ export default function App() {
         {!loading && currentUser && activeTab === "Business" && businessSubTab === "cards" && (
           <CreditCardPage
             currentUser={currentUser}
+            creditCards={creditCards}
+            onCardsChanged={() => loadInitialData({ silent: true })}
             onSelectTab={setActiveTab}
             onPayNow={onStartCreditCardPayment}
           />

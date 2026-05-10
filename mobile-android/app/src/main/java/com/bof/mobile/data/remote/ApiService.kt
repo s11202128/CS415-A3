@@ -27,7 +27,13 @@ import com.bof.mobile.model.BillPaymentRequest
 import com.bof.mobile.model.BankStatementRequest
 import com.bof.mobile.model.BankStatementResponse
 import com.bof.mobile.model.BillerItem
+import com.bof.mobile.model.CreditCardItem
+import com.bof.mobile.model.CreditCardPaymentRequest
+import com.bof.mobile.model.CreditCardPaymentResponse
+import com.bof.mobile.model.CreditCardTransactionItem
+import com.bof.mobile.model.CreditCardTransactionsResponse
 import com.bof.mobile.model.DashboardResponse
+import com.bof.mobile.model.MyCreditCardsResponse
 import com.bof.mobile.model.DepositRequest
 import com.bof.mobile.model.DepositResponse
 import com.bof.mobile.model.ForgotPasswordRequest
@@ -337,4 +343,20 @@ interface ApiService {
 
     @POST("transactions/verify-withdrawal")
     suspend fun verifyWithdrawal(@Body request: VerifyWithdrawalRequest): WithdrawResponse
+
+    @GET("creditcard/my-cards")
+    suspend fun getMyCreditCards(): MyCreditCardsResponse
+
+    @GET("creditcard/{cardNumber}/transactions")
+    suspend fun getCreditCardTransactions(
+        @Path("cardNumber") cardNumber: String,
+        @Query("kind") kind: String? = null,
+        @Query("limit") limit: Int = 50
+    ): CreditCardTransactionsResponse
+
+    @POST("creditcard/{cardNumber}/payment")
+    suspend fun payCreditCard(
+        @Path("cardNumber") cardNumber: String,
+        @Body request: CreditCardPaymentRequest
+    ): CreditCardPaymentResponse
 }

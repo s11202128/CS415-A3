@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   CreditCard, Download, ShoppingBag, Coffee, Plane,
   Award, ArrowRight, Eye, EyeOff,
 } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
+import { api } from "../../api";
 import PageHeader from "../ui/PageHeader";
 import StatCard from "../ui/StatCard";
-import CreditCardPanel from "../CreditCardPanel";
 
 const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -15,19 +15,104 @@ const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractio
  * CreditCardPage — premium credit-card UI with 3D card visual, KPI tiles,
  * spending sparkline and recent purchases.
  */
-export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
+export default function CreditCardPage({ currentUser, creditCards = [], onSelectTab, onPayNow }) {
   const [hide, setHide] = useState(false);
+  const [downloadingStatement, setDownloadingStatement] = useState(false);
+  const [statementError, setStatementError] = useState("");
+  const [purchases, setPurchases] = useState([]);
+  const [purchasesLoading, setPurchasesLoading] = useState(false);
+  const [purchasesError, setPurchasesError] = useState("");
 
-  // Demo placeholder values — wire to real /creditcard endpoints from CreditCardPanel
-  const limit = 5000;
-  const outstanding = 0;
+  const primaryCard = Array.isArray(creditCards) && creditCards.length > 0 ? creditCards[0] : null;
+  const limit = Number(primaryCard?.creditLimit || 0);
+  const outstanding = Number(primaryCard?.currentBalance || 0);
   const available = limit - outstanding;
-  const minPayment = 0;
-  const dueIn = 18;
+  const minPayment = outstanding > 0 ? Math.max(20, outstanding * 0.05) : 0;
+  const dueIn = primaryCard?.statementDue
+    ? Math.max(
+        0,
+        Math.ceil((new Date(primaryCard.statementDue).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+      )
+    : null;
   const points = 12450;
 
-  const purchases = []; // empty until backend feed wired
+  const maskedCardNumber = primaryCard?.cardNumber
+    ? `${String(primaryCard.cardNumber).slice(0, 4)} ${String(primaryCard.cardNumber).slice(4, 8)} •••• ${String(primaryCard.cardNumber).slice(-4)}`
+    : "•••• •••• •••• ••••";
+
   const sparkline = Array.from({ length: 14 }, (_, i) => ({ d: i + 1, v: Math.round(Math.random() * 200) }));
+
+  useEffect(() => {
+    async function loadPurchases() {
+      if (!primaryCard?.cardNumber) {
+        setPurchases([]);
+        setPurchasesError("");
+        return;
+      }
+
+      setPurchasesLoading(true);
+      setPurchasesError("");
+      try {
+        const payload = await api.getCreditCardTransactions(primaryCard.cardNumber, {
+          kind: "charge",
+          limit: 20,
+        });
+
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        const mapped = items.map((item) => {
+          const label = String(item.description || "Card purchase");
+          const lower = label.toLowerCase();
+          let icon = "shop";
+          if (lower.includes("coffee") || lower.includes("cafe")) icon = "coffee";
+          else if (lower.includes("flight") || lower.includes("air") || lower.includes("travel")) icon = "plane";
+
+          return {
+            icon,
+            merchant: label,
+            date: new Date(item.createdAt).toLocaleDateString("en-FJ", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            amount: Number(item.amount || 0),
+          };
+        });
+
+        setPurchases(mapped);
+      } catch (err) {
+        setPurchases([]);
+        setPurchasesError(err?.message || "Unable to load card purchases right now.");
+      } finally {
+        setPurchasesLoading(false);
+      }
+    }
+
+    loadPurchases();
+  }, [primaryCard?.cardNumber]);
+
+  async function handleDownloadStatement() {
+    setStatementError("");
+    setDownloadingStatement(true);
+    try {
+      const { blob, contentDisposition } = await api.downloadMyStatement({});
+      const filenameMatch = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(contentDisposition || "");
+      const encodedName = filenameMatch?.[1] || filenameMatch?.[2] || "bank-statement.pdf";
+      const filename = decodeURIComponent(encodedName);
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setStatementError(err?.message || "Unable to download statement right now.");
+    } finally {
+      setDownloadingStatement(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -61,7 +146,7 @@ export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
             <div className="grid place-items-center h-9 w-12 rounded-md bg-gradient-to-br from-amber-300 to-amber-500/70" />
           </div>
           <p className="relative mt-6 font-mono tracking-[0.3em] text-lg text-white/90">
-            {hide ? "•••• •••• •••• ••••" : "4521 8932 4567 7783"}
+            {hide ? "•••• •••• •••• ••••" : maskedCardNumber}
           </p>
           <div className="relative mt-5 flex items-end justify-between text-xs text-white/80">
             <div>
@@ -112,11 +197,18 @@ export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
           </div>
         </button>
 
-        <button className="bof-card text-left group">
+        <button
+          type="button"
+          onClick={handleDownloadStatement}
+          disabled={downloadingStatement}
+          className="bof-card text-left group disabled:opacity-60 disabled:cursor-not-allowed"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-navy-900">Download Statement</p>
-              <p className="text-xs text-slate-600">PDF for the current cycle</p>
+              <p className="text-xs text-slate-600">
+                {downloadingStatement ? "Preparing PDF..." : "PDF for the current cycle"}
+              </p>
             </div>
             <div className="grid place-items-center h-10 w-10 rounded-xl bg-navy-900 text-white group-hover:scale-105 transition-transform">
               <Download className="h-5 w-5" />
@@ -124,6 +216,10 @@ export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
           </div>
         </button>
       </section>
+
+      {statementError && (
+        <p className="text-sm text-rose-600">{statementError}</p>
+      )}
 
       {/* Spending analytics */}
       <section className="grid lg:grid-cols-[2fr,1fr] gap-4">
@@ -145,7 +241,11 @@ export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
 
         <div className="bof-card">
           <h3 className="font-bold text-navy-900 mb-2">Recent Purchases</h3>
-          {purchases.length === 0 ? (
+          {purchasesLoading ? (
+            <p className="text-sm text-slate-600 py-6 text-center">Loading purchases...</p>
+          ) : purchasesError ? (
+            <p className="text-sm text-rose-600 py-6 text-center">{purchasesError}</p>
+          ) : purchases.length === 0 ? (
             <p className="text-sm text-slate-600 py-6 text-center">No purchases yet.</p>
           ) : (
             <ul className="divide-y divide-slate-100">
@@ -168,15 +268,6 @@ export default function CreditCardPage({ currentUser, onSelectTab, onPayNow }) {
         </div>
       </section>
 
-      {/* Existing functional credit card panel */}
-      <section className="bof-card">
-        <h3 className="font-bold text-navy-900 mb-2">Card Operations</h3>
-        <p className="text-sm text-slate-600 mb-4">
-          Create your card, charge purchases, view your summary and make payments via the
-          existing <code>/creditcard</code> backend.
-        </p>
-        <CreditCardPanel currentUser={currentUser} />
-      </section>
     </div>
   );
 }

@@ -25,6 +25,7 @@ import com.bof.mobile.data.remote.NetworkModule
 import com.bof.mobile.data.repository.AccountRepository
 import com.bof.mobile.data.repository.AdminRepository
 import com.bof.mobile.data.repository.AuthRepository
+import com.bof.mobile.data.repository.CreditCardRepository
 import com.bof.mobile.data.repository.DashboardRepository
 import com.bof.mobile.data.repository.FeatureRepository
 import com.bof.mobile.data.repository.TransferRepository
@@ -35,6 +36,7 @@ import com.bof.mobile.ui.activity.ActivityLogScreen
 import com.bof.mobile.ui.auth.LoginScreen
 import com.bof.mobile.ui.auth.RegisterScreen
 import com.bof.mobile.ui.billpayment.BillPaymentScreen
+import com.bof.mobile.ui.creditcard.CreditCardScreen
 import com.bof.mobile.ui.dashboard.DashboardScreen
 import com.bof.mobile.ui.deposit.DepositScreen
 import com.bof.mobile.ui.features.FeatureHubScreen
@@ -47,6 +49,7 @@ import com.bof.mobile.viewmodel.AccountsViewModel
 import com.bof.mobile.viewmodel.AdminViewModel
 import com.bof.mobile.viewmodel.AuthViewModel
 import com.bof.mobile.viewmodel.CreateAccountViewModel
+import com.bof.mobile.viewmodel.CreditCardViewModel
 import com.bof.mobile.viewmodel.DashboardViewModel
 import com.bof.mobile.viewmodel.DepositViewModel
 import com.bof.mobile.viewmodel.FeatureViewModel
@@ -65,7 +68,8 @@ private enum class MainTab {
     FUNDING,
     DEPOSIT,
     WITHDRAW,
-    BILL_PAYMENT
+    BILL_PAYMENT,
+    CREDIT_CARDS
 }
 
 @Composable
@@ -82,9 +86,11 @@ fun AppRoot() {
     // Recreate ViewModels when apiService changes (token changes)
     val accountRepository = remember(apiService) { AccountRepository(apiService) }
     val featureRepository = remember(apiService) { FeatureRepository(apiService) }
+    val creditCardRepository = remember(apiService) { CreditCardRepository(apiService) }
     val dashboardViewModel = remember(apiService) { DashboardViewModel(DashboardRepository(apiService)) }
     val accountsViewModel = remember(apiService) { AccountsViewModel(accountRepository) }
     val createAccountViewModel = remember(apiService) { CreateAccountViewModel(accountRepository) }
+    val creditCardViewModel = remember(apiService) { CreditCardViewModel(creditCardRepository) }
     val depositViewModel = remember(apiService) { DepositViewModel(accountRepository, featureRepository) }
     val withdrawViewModel = remember(apiService) { WithdrawViewModel(accountRepository, featureRepository) }
     val transferViewModel = remember(apiService, authState.customerId, authState.userId) {
@@ -170,6 +176,7 @@ fun AppRoot() {
             onNavigateToDeposit = { navigateTo(MainTab.DEPOSIT) },
             onNavigateToWithdraw = { navigateTo(MainTab.WITHDRAW) },
             onNavigateToBillPayment = { navigateTo(MainTab.BILL_PAYMENT) },
+            onNavigateToCreditCards = { navigateTo(MainTab.CREDIT_CARDS) },
             onNavigateToStatement = { navigateTo(MainTab.STATEMENT) },
             onNavigateToReport = { navigateTo(MainTab.REPORT) },
             onNavigateToActivity = { navigateTo(MainTab.ACTIVITY) }
@@ -261,6 +268,11 @@ fun AppRoot() {
             canGoBack = navigationHistory.isNotEmpty(),
             onBack = { goBack() }
         )
+        MainTab.CREDIT_CARDS -> CreditCardScreen(
+            viewModel = creditCardViewModel,
+            canGoBack = navigationHistory.isNotEmpty(),
+            onBack = { goBack() }
+        )
     }
 
     LaunchedEffect(customerId, authState.isLoggedIn, authState.isAdmin) {
@@ -278,6 +290,9 @@ fun AppRoot() {
     LaunchedEffect(activeTab, customerId) {
         if (activeTab == MainTab.ACCOUNTS && authState.isLoggedIn && !authState.isAdmin) {
             accountsViewModel.loadAccounts()
+        }
+        if (activeTab == MainTab.CREDIT_CARDS && authState.isLoggedIn && !authState.isAdmin) {
+            creditCardViewModel.loadCards()
         }
     }
 }

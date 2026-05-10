@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 
-export default function CreditCardPanel({ currentUser }) {
+export default function CreditCardPanel({ currentUser, onCardsChanged }) {
   const [cardNumber, setCardNumber] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [creditLimit, setCreditLimit] = useState("");
@@ -78,6 +78,7 @@ export default function CreditCardPanel({ currentUser }) {
       setCardNumber("");
       setCreditLimit("");
       await loadMyCards();
+      await onCardsChanged?.();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -96,6 +97,7 @@ export default function CreditCardPanel({ currentUser }) {
       await api.chargeCreditCard(card.cardNumber, amount);
       setChargeAmount("");
       await refresh(card.cardNumber);
+      await onCardsChanged?.();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -111,6 +113,7 @@ export default function CreditCardPanel({ currentUser }) {
       await api.payCreditCard(card.cardNumber, amount);
       setPaymentAmount("");
       await refresh(card.cardNumber);
+      await onCardsChanged?.();
     } catch (err) {
       setError(err.message);
     } finally {

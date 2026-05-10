@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Briefcase, TrendingUp, TrendingDown, AlertTriangle, FileSignature,
   Users, Receipt, Wallet, BarChart3,
@@ -6,7 +6,7 @@ import {
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area } from "recharts";
 import PageHeader from "../ui/PageHeader";
 import StatCard from "../ui/StatCard";
-import AccountManager from "../AccountManager";
+import { api } from "../../api";
 
 const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -16,10 +16,37 @@ const FJD = (n) => `FJ$${Number(n || 0).toLocaleString("en-FJ", { minimumFractio
  * AccountManager for actual business-layer account CRUD.
  */
 export default function BusinessPage({ accounts = [], transactions = [] }) {
-  const businessAccounts = useMemo(
-    () => accounts.filter((a) => /business/i.test(a.accountType || a.type || "")),
-    [accounts]
+  const [businessLayerAccounts, setBusinessLayerAccounts] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const data = await api.listBusinessLayerAccounts();
+        const items = Array.isArray(data?.items) ? data.items : [];
+        if (active) setBusinessLayerAccounts(items);
+      } catch {
+        if (active) setBusinessLayerAccounts([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const ownedAccountIds = useMemo(
+    () => new Set(accounts.map((a) => String(a.accountNumber || "")).filter(Boolean)),
+    [accounts],
   );
+
+  const businessAccounts = useMemo(() => {
+    const linkedBusinessLayer = businessLayerAccounts.filter(
+      (a) => /business/i.test(a.accountType || "") && ownedAccountIds.has(String(a.accountId || "")),
+    );
+    if (linkedBusinessLayer.length > 0) return linkedBusinessLayer;
+    return accounts.filter((a) => /business/i.test(a.accountType || a.type || ""));
+  }, [accounts, businessLayerAccounts, ownedAccountIds]);
+
   const balance = businessAccounts.reduce((s, a) => s + Number(a.balance || 0), 0);
 
   const { netInput, netOutput, cashflow } = useMemo(() => {
@@ -153,14 +180,6 @@ export default function BusinessPage({ accounts = [], transactions = [] }) {
         </div>
       </section>
 
-      {/* Account manager (existing) */}
-      <section className="bof-card">
-        <h3 className="font-bold text-navy-900 mb-2">Manage Business Accounts</h3>
-        <p className="text-sm text-slate-600 mb-4">
-          Create and manage Access / Savings / Business accounts in the new business layer.
-        </p>
-        <AccountManager />
-      </section>
     </div>
   );
 }

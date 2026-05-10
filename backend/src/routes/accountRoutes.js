@@ -35,6 +35,12 @@ async function persist(row, account) {
     row.monthlyWithdrawals = account.monthlyWithdrawals;
   }
   await row.save();
+  // Keep the canonical accounts table in sync so Dashboard and AccountCardsRow
+  // always show the correct balance for Savings / Simple Access / Business accounts.
+  await Account.update(
+    { balance: account.balance },
+    { where: { accountNumber: String(account.accountId) } }
+  );
 }
 
 async function loadOrFail(res, id) {
@@ -60,22 +66,34 @@ router.get("/list", async (req, res) => {
 // POST /api/accounts/create
 router.post("/create", async (req, res) => {
   try {
-    const { type, accountId, owner, balance } = req.body || {};
+    const { type, accountId, owner, balance, customerId } = req.body || {};
     if (!type || !accountId) {
       return sendError(res, 400, "type and accountId are required");
     }
+    const normalizedAccountId = String(accountId).trim();
+    const normalizedCustomerId = Number(customerId);
+    if (!Number.isFinite(normalizedCustomerId) || normalizedCustomerId <= 0) {
+      return sendError(res, 400, "customerId is required and must be a positive number");
+    }
     // accountId MUST match an existing accounts.accountNumber (12-digit) in the bank.
-    const baseAccount = await Account.findOne({ where: { accountNumber: String(accountId) } });
+    const baseAccount = await Account.findOne({ where: { accountNumber: normalizedAccountId } });
     if (!baseAccount) {
-      return sendError(res, 400, `Account number ${accountId} does not exist in the bank`);
+      return sendError(res, 400, `Account number ${normalizedAccountId} does not exist in the bank`);
     }
-    const existing = await BusinessLayerAccount.findOne({ where: { accountId: String(accountId) } });
+    if (Number(baseAccount.customerId) !== normalizedCustomerId) {
+      return sendError(
+        res,
+        400,
+        `Account ${normalizedAccountId} belongs to customer ${baseAccount.customerId}, not customer ${normalizedCustomerId}`,
+      );
+    }
+    const existing = await BusinessLayerAccount.findOne({ where: { accountId: normalizedAccountId } });
     if (existing) {
-      return sendError(res, 409, `Account ${accountId} already exists`);
+      return sendError(res, 409, `Account ${normalizedAccountId} already exists`);
     }
-    // Use the real account holder if owner not supplied.
+    // Business owner can be a business label and does not need to match accountHolder.
     const ownerName = (owner && String(owner).trim()) || baseAccount.accountHolder || "Unknown";
-    const account = AccountFactory.createAccount(type, accountId, ownerName, { balance });
+    const account = AccountFactory.createAccount(type, normalizedAccountId, ownerName, { balance });
     const row = await BusinessLayerAccount.create({
       accountId: account.accountId,
       accountType: account.accountType,
@@ -209,7 +227,25 @@ router.get("/mine", requireAuth, async (req, res) => {
         ["id", "ASC"],
       ],
     });
-    res.json({ count: rows.length, items: rows.map(serializeAccount) });
+
+    // Overlay business-layer balances so Savings / Simple Access / Business
+    // accounts always reflect the authoritative business-layer balance.
+    const accountNumbers = rows.map((r) => r.accountNumber);
+    const blRows = accountNumbers.length
+      ? await BusinessLayerAccount.findAll({ where: { accountId: accountNumbers } })
+      : [];
+    const blMap = {};
+    blRows.forEach((bl) => { blMap[bl.accountId] = Number(bl.balance); });
+
+    const serialized = rows.map((r) => {
+      const s = serializeAccount(r);
+      if (Object.prototype.hasOwnProperty.call(blMap, r.accountNumber)) {
+        s.balance = blMap[r.accountNumber];
+      }
+      return s;
+    });
+
+    res.json({ count: serialized.length, items: serialized });
   } catch (err) {
     sendError(res, 500, err.message);
   }
