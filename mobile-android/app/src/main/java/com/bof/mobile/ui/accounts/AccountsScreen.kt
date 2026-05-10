@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bof.mobile.model.AccountItem
@@ -288,6 +289,50 @@ private fun OverviewTab(
                         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("Status", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(accountStatus, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Monthly Fee Rule", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(feeLabel(accountType), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                if (accountType.contains("business", ignoreCase = true)) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFEF3C7)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text("⚠️", modifier = Modifier.padding(top = 2.dp))
+                            Column {
+                                Text(
+                                    text = "Business Fee",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF92400E)
+                                )
+                                Text(
+                                    text = "Your business account incurs a FJD 20.00/month maintenance fee if net monthly input is below FJD 2,000.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color(0xB3711C1C)
+                                )
+                            }
                         }
                     }
                 }
@@ -544,5 +589,20 @@ private fun AccountsMessageBanner(
                 }
             }
         }
+    }
+}
+
+/**
+ * Returns the fee rule label for a given account type.
+ * Matches the backend business layer fee structure.
+ *
+ * @param accountType The account type string
+ * @return The fee rule label
+ */
+private fun feeLabel(accountType: String): String {
+    return when {
+        accountType.contains("business", ignoreCase = true) -> "FJD 20.00/month if net input < FJD 2,000"
+        accountType.contains("savings", ignoreCase = true) -> "1 free withdrawal/month · FJD 5.00 per extra"
+        else -> "FJD 0.90 flat/month"  // Access / Simple Access
     }
 }
