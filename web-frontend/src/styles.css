@@ -1939,6 +1939,120 @@ tbody tr:hover {
   min-height: 120px;
 }
 
+.premium-tab-bar {
+  gap: 8px;
+  border-bottom: none;
+  margin-bottom: 16px;
+  padding: 6px;
+  background: linear-gradient(180deg, #f7fbff, #edf4fd);
+  border: 1px solid #d4e2f2;
+  border-radius: 14px;
+}
+
+.premium-tab-bar .acct-tab-btn {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  margin-bottom: 0;
+  padding: 9px 14px;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.premium-tab-bar .acct-tab-btn.active {
+  border-color: #a9c6e7;
+  background: linear-gradient(180deg, #0f6bcf, #0b5cb3);
+  color: #fff;
+}
+
+.premium-section {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #d9e5f2;
+  background: linear-gradient(180deg, #f9fcff, #f1f7fe);
+}
+
+.premium-table {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #d8e4f3;
+}
+
+.premium-table th {
+  background: #f2f8ff;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.premium-table tbody tr:hover {
+  background: #f2f8ff;
+}
+
+.premium-form-grid {
+  background: linear-gradient(180deg, #fdfefe, #f5f9ff);
+  border: 1px solid #d8e5f4;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.premium-success-screen {
+  border: 1px solid #cfe3d8;
+  background: linear-gradient(180deg, #f8fffb, #eefaf4);
+  border-radius: 14px;
+}
+
+.premium-loans .premium-loans-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.premium-kpi-card {
+  border: 1px solid #d4e3f4;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, #f3f8ff);
+  padding: 12px;
+}
+
+.premium-kpi-label {
+  margin: 0;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #607792;
+  font-weight: 700;
+}
+
+.premium-kpi-value {
+  margin: 5px 0 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f4f9b;
+}
+
+.premium-limits > div {
+  padding: 8px 10px;
+  border: 1px solid #d4e4f7;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.premium-wallet select {
+  margin-top: 6px;
+}
+
+.premium-otp-form {
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .premium-loans .premium-loans-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
 .status-card {
   margin-top: 10px;
   padding: 10px 12px;
