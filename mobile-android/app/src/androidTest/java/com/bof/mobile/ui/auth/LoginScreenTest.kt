@@ -21,6 +21,7 @@ import org.junit.Test
  */
 class LoginScreenTest {
 
+    // --- Setup ---
     @get:Rule
     val composeRule = createComposeRule()
 
