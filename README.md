@@ -1,3 +1,6 @@
+AWS tutorial: https://youtu.be/Nzv-tzU-UAw?si=fAzLchj6H-n0_4Og
+
+
 # CS415-A1 - Bank of Fiji Online Banking Prototype
 
 This workspace was split into two standalone repositories (history preserved):
